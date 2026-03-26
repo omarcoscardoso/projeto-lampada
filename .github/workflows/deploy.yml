@@ -58,6 +58,7 @@ jobs:
           env_vars: |
             APP_NAME=${{ env.SERVICE_NAME }},
             APP_ENV=${{ env.APP_ENV }},
+            APP_URL=https://lampada.iprviamao.com.br,
             APP_DEBUG=true,
             APP_LOCALE=pt_BR,
             DB_CONNECTION=mysql,
