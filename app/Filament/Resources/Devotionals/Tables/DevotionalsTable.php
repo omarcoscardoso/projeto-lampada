@@ -19,13 +19,16 @@ class DevotionalsTable
             ->columns([
                 TextColumn::make('date')
                     ->label('Data')
-                    ->state(fn (Devotional $record): string => "{$record->day}/{$record->month}"),
+                    ->sortable()
+                    ->state(fn(Devotional $record): string => "{$record->day}/{$record->month}"),
                 TextColumn::make('reference_old_testament')
-                    ->label('Ref. (Antigo T.)')
-                    ->searchable(),
+                    ->label('Antigo Testamento')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('reference_new_testament')
-                    ->label('Ref. (Novo T.)')
-                    ->searchable(),
+                    ->label('Novo Testamento')
+                    ->searchable()
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('month')
