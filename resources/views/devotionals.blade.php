@@ -16,7 +16,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 
-    <title>Devocional Diário - {{ config('app.name', 'Lâmpada') }}</title>
+    <title>Leitura Bíblica Diária - {{ config('app.name', 'Lâmpada') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -210,7 +210,7 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-slate-800 dark:text-slate-200">Como posso ajudar hoje?</h3>
-                            <p class="text-sm text-slate-500">Pergunte algo sobre o devocional que você está lendo.</p>
+                            <p class="text-sm text-slate-500">Pergunte algo sobre a leitura do dia.</p>
                         </div>
                     </div>
                 </template>

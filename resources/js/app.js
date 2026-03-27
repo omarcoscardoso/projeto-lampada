@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     devotionalContent.innerHTML = `
                         <div class="mb-10 animate-fade-in-up">
                             <span class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
-                                Devocional do Dia
+                                Leitura do Dia
                             </span>
                             <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize">
                                 ${displayDate}
