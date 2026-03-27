@@ -18,11 +18,19 @@ class DevotionalController extends Controller
             ->first();
 
         if ($devotional) {
+            $oldRef = $devotional->reference_old_testament;
+            $oldContext = \App\Services\WhatsAppFormatter::format($devotional->content_old_testament);
+            $newRef = $devotional->reference_new_testament;
+            $newContext = \App\Services\WhatsAppFormatter::format($devotional->content_new_testament);
+
+            $whatsappMessage = "*{$oldRef}*\n{$oldContext}\n\n*{$newRef}*\n{$newContext}";
+
             return response()->json([
-                'reference_old_testament' => $devotional->reference_old_testament,
+                'reference_old_testament' => $oldRef,
                 'content_old_testament' => $devotional->content_old_testament,
-                'reference_new_testament' => $devotional->reference_new_testament,
+                'reference_new_testament' => $newRef,
                 'content_new_testament' => $devotional->content_new_testament,
+                'whatsapp_message' => $whatsappMessage,
             ]);
         }
 

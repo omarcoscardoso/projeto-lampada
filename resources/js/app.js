@@ -6,11 +6,61 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareButton = document.getElementById('whatsapp-share-btn');
     let currentDevotional = null;
 
-    // Helper to strip HTML tags
-    function stripHtml(html) {
+    // Helper to format HTML for WhatsApp (Optimized fallback version)
+    function formatForWhatsApp(html) {
+        if (!html) return '';
+
+        let formatted = html
+            // 1. Explicit line breaks
+            .replace(/<br\s*\/?>/gi, '\n')
+            // 2. Headings (h1-h6) become Bold
+            .replace(/<h[1-6][^>]*>/gi, '\n\n*')
+            .replace(/<\/h[1-6]>/gi, '*\n')
+            // 3. Block tags correctly handled
+            .replace(/<(p|div|section)[^>]*>/gi, '\n')
+            .replace(/<\/(p|div|section)>/gi, '\n')
+            // 4. Lists: use a simple hyphen bullet
+            .replace(/<li[^>]*>/gi, '\n- ')
+            .replace(/<\/li>/gi, '\n')
+            .replace(/<\/?(ul|ol)[^>]*>/gi, '\n')
+            // 5. Text style (Bold, Italic, Strikethrough, Monospace)
+            .replace(/<(b|strong)[^>]*>/gi, '*')
+            .replace(/<\/(b|strong)>/gi, '*')
+            .replace(/<(i|em)[^>]*>/gi, '_')
+            .replace(/<\/(i|em)>/gi, '_')
+            .replace(/<(s|strike|del)[^>]*>/gi, '~')
+            .replace(/<\/(s|strike|del)>/gi, '~')
+            .replace(/<(code|pre)[^>]*>/gi, '```')
+            .replace(/<\/(code|pre)>/gi, '```');
+
+        // 6. Remove remaining tags and decode entities
         let tmp = document.createElement("DIV");
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || "";
+        tmp.innerHTML = formatted;
+        let text = tmp.textContent || tmp.innerText || "";
+
+        // 7. Final cleanup
+        // Step A: Replace bullet followed immediately by newline (common with nested tags like <li><p>)
+        text = text.replace(/(-)\s*[\r\n]+/g, '$1 ');
+
+        // Step B: Clean up whitespace on each line but preserve bullets
+        text = text
+            .split('\n')
+            .map(line => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('-')) {
+                    // Ensure there is only one space after hyphen
+                    return '- ' + trimmed.substring(1).trim();
+                }
+                return trimmed;
+            })
+            .join('\n');
+
+        // Step C: Collapse excessive newlines
+        // First collapse any sequence of newlines before a bullet into a SINGLE newline
+        text = text.replace(/\n+(- )/g, '\n$1');
+
+        // Then collapse other sequences of 3+ newlines to 2 (maximum 1 blank line between paragraphs)
+        return text.replace(/\n{3,}/g, '\n\n').trim();
     }
 
     // Skeleton loader HTML
@@ -39,8 +89,12 @@ document.addEventListener('DOMContentLoaded', () => {
         shareButton.addEventListener('click', () => {
             if (!currentDevotional) return;
 
-            const message = `*${currentDevotional.reference_old_testament}*\n${stripHtml(currentDevotional.content_old_testament)}\n\n*${currentDevotional.reference_new_testament}*\n${stripHtml(currentDevotional.content_new_testament)}`;
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message.trim())}`;
+            // Prefer pre-formatted message from backend if available
+            const message = currentDevotional.whatsapp_message ||
+                `*${currentDevotional.reference_old_testament}*\n${formatForWhatsApp(currentDevotional.content_old_testament)}\n\n*${currentDevotional.reference_new_testament}*\n${formatForWhatsApp(currentDevotional.content_new_testament)}`;
+
+            // Using wa.me endpoint which is the modern standard for sharing
+            const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message.trim())}`;
             window.open(whatsappUrl, '_blank');
         });
 
@@ -61,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const dd = String(selectedDate.getDate()).padStart(2, '0');
                         const formattedDate = `${yyyy}-${mm}-${dd}`;
                         fetchDevotional(formattedDate);
-                        
+
                         // Dispara o evento global para o Alpine fechar o modal
                         window.dispatchEvent(new CustomEvent('close-calendar'));
                     }
@@ -86,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     currentDevotional = data;
-                    
+
                     // Format date for display
                     const dateObj = new Date(date + 'T00:00:00');
                     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -130,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </article>
                         </div>
                     `;
-                    
+
                     shareButton.classList.remove('hidden');
                     setTimeout(() => {
                         shareButton.classList.remove('scale-90', 'opacity-0');
