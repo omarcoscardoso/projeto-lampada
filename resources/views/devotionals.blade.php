@@ -129,7 +129,7 @@
         <header class="fixed top-0 w-full max-w-lg z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
             <div class="flex items-center justify-between px-4 h-16">
                 <div class="flex items-center">
-                    <img src="https://storage.googleapis.com/iprviamao-com-br/images_site/logo_lampada_154x59.png" alt="Logo Lâmpada" class="h-10 w-auto">
+                    <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-10 w-auto">
                 </div>
 
                 <button
@@ -286,8 +286,8 @@
                     @click="showAiChat = true"
                     type="button"
                     class="flex flex-col items-center justify-center flex-1 h-full text-slate-400 hover:text-amber-600 transition-colors">
-                    <x-lucide-lamp class="w-6 h-6 mb-1" />
-                    <span class="text-[10px] font-medium">LampIÃo</span>
+                    <x-lucide-siren class="w-6 h-6 mb-1" />
+                    <span class="text-[10px] font-medium">Lampião</span>
                 </button>
 
                 <a href="https://iprviamao.com.br/lampada/" target="_blank" class="flex flex-col items-center justify-center flex-1 h-full text-slate-400 hover:text-amber-600 transition-colors">
