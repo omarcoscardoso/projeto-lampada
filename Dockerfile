@@ -75,17 +75,17 @@ CMD ["/usr/local/bin/run.sh"]
 
 ### PARA TESTE LOCAL DA IMAGEM COM AS VARIÁVEIS DE AMBIENTE
 # docker build -t lampada-iprviamao-com-br:latest .
-docker run -p 8080:8080 --rm \
-    --add-host=host.docker.internal:$(docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}') \
-    --env APP_NAME="lampada-iprviamao-com-br" \
-    --env APP_ENV="development" \
-    --env APP_KEY="base64:CfqGMuEtBoOibR6hJvcCZ9IG+Fq2F/0wZlqMhzGeqFc=" \
-    --env APP_DEBUG="true" \
-    --env APP_URL="http://localhost:8080" \
-    --env DB_CONNECTION="mysql" \
-    --env DB_HOST="host.docker.internal" \
-    --env DB_PORT="3306" \
-    --env DB_DATABASE="lampada" \
-    --env DB_USERNAME="sail" \
-    --env DB_PASSWORD="password" \
-    lampada-iprviamao-com-br:latest
+# docker run -p 8080:8080 --rm \
+#     --add-host=host.docker.internal:$(docker network inspect bridge --format='{{(index .IPAM.Config 0).Gateway}}') \
+#     --env APP_NAME="lampada-iprviamao-com-br" \
+#     --env APP_ENV="development" \
+#     --env APP_KEY="base64:CfqGMuEtBoOibR6hJvcCZ9IG+Fq2F/0wZlqMhzGeqFc=" \
+#     --env APP_DEBUG="true" \
+#     --env APP_URL="http://localhost:8080" \
+#     --env DB_CONNECTION="mysql" \
+#     --env DB_HOST="host.docker.internal" \
+#     --env DB_PORT="3306" \
+#     --env DB_DATABASE="lampada" \
+#     --env DB_USERNAME="sail" \
+#     --env DB_PASSWORD="password" \
+#     lampada-iprviamao-com-br:latest
