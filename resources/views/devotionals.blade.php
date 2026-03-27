@@ -191,7 +191,7 @@
             <header class="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl">
-                        <x-lucide-lamp class="w-5 h-5" />
+                        <x-lucide-siren class="w-5 h-5" />
                     </div>
                     <h2 class="font-bold text-lg">Assistente Lampião</h2>
 
@@ -206,7 +206,7 @@
                 <template x-if="messages.length === 0">
                     <div class="flex flex-col items-center justify-center h-full text-center p-8 space-y-4">
                         <div class="w-20 h-20 bg-amber-50 dark:bg-amber-900/20 rounded-full flex items-center justify-center text-amber-500">
-                            <x-lucide-lamp class="w-10 h-10" />
+                            <x-lucide-siren class="w-10 h-10" />
                         </div>
                         <div>
                             <h3 class="font-bold text-slate-800 dark:text-slate-200">Como posso ajudar hoje?</h3>
