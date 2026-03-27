@@ -98,7 +98,8 @@
                             },
                             body: JSON.stringify({
                                 message: userMsg,
-                                devotional_context: context
+                                devotional_context: context,
+                                history: this.messages.slice(0, -1) // Envia todo o histórico exceto a última mensagem do usuário (que já vai no campo 'message')
                             })
                         });
                         
@@ -121,6 +122,17 @@
                     if (container) {
                         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
                     }
+                },
+
+                formatMarkdown(content) {
+                    if (!content) return '';
+                    // Basic bold
+                    let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    // Basic italic
+                    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    // Lists (bullets)
+                    html = html.replace(/^\s*[\-\*]\s+(.*)/gm, '• $1');
+                    return html;
                 }
             }"
         @close-calendar.window="showCalendar = false">
@@ -209,7 +221,7 @@
                             :class="msg.role === 'user' 
                                     ? 'bg-amber-600 text-white rounded-2xl rounded-tr-none max-w-[85%] p-3 shadow-sm shadow-amber-600/20' 
                                     : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-none max-w-[85%] p-3 shadow-sm border border-slate-100 dark:border-slate-700'">
-                            <p class="text-sm leading-relaxed" x-text="msg.content"></p>
+                            <div class="text-sm leading-relaxed whitespace-pre-line" x-html="msg.role === 'ai' ? formatMarkdown(msg.content) : msg.content"></div>
                         </div>
                     </div>
                 </template>
