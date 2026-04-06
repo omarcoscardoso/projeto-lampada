@@ -1,11 +1,14 @@
 import './bootstrap';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const calendarElement = document.getElementById('calendar');
+    const calendarSidebar = document.getElementById('calendar-sidebar');
+    const calendarModal = document.getElementById('calendar-modal');
     const devotionalContent = document.getElementById('devotional-content');
     const shareButton = document.getElementById('whatsapp-share-btn');
     const bibleButton = document.getElementById('bible-read-btn');
     let currentDevotional = null;
+
+    // Helper ...
 
     // Helper to format HTML for WhatsApp (Optimized fallback version)
     function formatForWhatsApp(html) {
@@ -86,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
-    if (calendarElement && devotionalContent && shareButton) {
+    if (devotionalContent && shareButton) {
         shareButton.addEventListener('click', () => {
             if (!currentDevotional) return;
 
@@ -99,32 +102,38 @@ document.addEventListener('DOMContentLoaded', () => {
             window.open(whatsappUrl, '_blank');
         });
 
-        const calendar = new VanillaCalendar(calendarElement, {
-            settings: {
-                lang: 'pt',
-                visibility: {
-                    theme: 'system',
-                },
-            },
-            actions: {
-                clickDay(event, self) {
-                    if (self.selectedDates && self.selectedDates[0]) {
-                        const dateString = self.selectedDates[0];
-                        const selectedDate = new Date(dateString + 'T00:00:00');
-                        const yyyy = selectedDate.getFullYear();
-                        const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
-                        const dd = String(selectedDate.getDate()).padStart(2, '0');
-                        const formattedDate = `${yyyy}-${mm}-${dd}`;
-                        fetchDevotional(formattedDate);
+        // Initialize all Calendars (Sidebar and Modal)
+        const calendarSelectors = ['#calendar-sidebar', '#calendar-modal'];
+        calendarSelectors.forEach(selector => {
+            const el = document.querySelector(selector);
+            if (el) {
+                const calendar = new VanillaCalendar(el, {
+                    settings: {
+                        lang: 'pt',
+                        visibility: {
+                            theme: 'system',
+                        },
+                    },
+                    actions: {
+                        clickDay(event, self) {
+                            if (self.selectedDates && self.selectedDates[0]) {
+                                const dateString = self.selectedDates[0];
+                                const selectedDate = new Date(dateString + 'T00:00:00');
+                                const yyyy = selectedDate.getFullYear();
+                                const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                                const dd = String(selectedDate.getDate()).padStart(2, '0');
+                                const formattedDate = `${yyyy}-${mm}-${dd}`;
+                                fetchDevotional(formattedDate);
 
-                        // Dispara o evento global para o Alpine fechar o modal
-                        window.dispatchEvent(new CustomEvent('close-calendar'));
-                    }
-                },
-            },
+                                // Dispatch global event for Alpine (useful for mobile modal)
+                                window.dispatchEvent(new CustomEvent('close-calendar'));
+                            }
+                        },
+                    },
+                });
+                calendar.init();
+            }
         });
-
-        calendar.init();
 
         async function fetchDevotional(date) {
             devotionalContent.innerHTML = skeletonLoader;
