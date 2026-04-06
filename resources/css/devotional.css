@@ -1,0 +1,44 @@
+[x-cloak] {
+    display: none !important;
+}
+
+.vc-container {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+.vc-header {
+    background: transparent !important;
+}
+
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Correção para o calendário não vazar na sidebar */
+#calendar-sidebar {
+    font-size: 0.7rem !important;
+    width: 100% !important;
+    max-width: 255px !important;
+    margin: 0 auto !important;
+}
+
+#calendar-sidebar .vc-day__content {
+    width: 30px !important;
+    height: 30px !important;
+    line-height: 30px !important;
+}
+
+#calendar-sidebar .vc-header {
+    padding: 0.5rem !important;
+}

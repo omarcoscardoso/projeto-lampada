@@ -22,171 +22,14 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
 
-    <!-- Vanilla Calendar CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/build/vanilla-calendar.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/build/themes/light.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/build/themes/dark.min.css" rel="stylesheet">
-
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <!-- Alpine.js via CDN -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style>
-        [x-cloak] {
-            display: none !important;
-        }
-
-        .vc-container {
-            width: 100% !important;
-            border: none !important;
-            background: transparent !important;
-        }
-
-        .vc-header {
-            background: transparent !important;
-        }
-
-        .pb-safe {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        /* Correção para o calendário não vazar na sidebar */
-        #calendar-sidebar {
-            font-size: 0.7rem !important;
-            width: 100% !important;
-            max-width: 255px !important;
-            margin: 0 auto !important;
-        }
-
-        #calendar-sidebar .vc-day__content {
-            width: 30px !important;
-            height: 30px !important;
-            line-height: 30px !important;
-        }
-
-        #calendar-sidebar .vc-header {
-            padding: 0.5rem !important;
-        }
-    </style>
 </head>
 
 <body class="bg-white dark:bg-black font-sans antialiased text-slate-900 dark:text-slate-100 h-full overflow-hidden"
-    x-data="{ 
-        showCalendar: false, 
-        showAiChat: false,
-        showBibleModal: false,
-        messages: [],
-        userInput: '',
-        isAiLoading: false,
-        bibleLoading: false,
-        bibleData: null,
-        
-        async sendToAi() {
-            if (!this.userInput.trim() || this.isAiLoading) return;
-            const userMsg = this.userInput;
-            this.messages.push({ role: 'user', content: userMsg });
-            this.userInput = '';
-            this.isAiLoading = true;
-            const contextElement = document.getElementById('devotional-content');
-            const context = contextElement ? contextElement.innerText : '';
-            this.$nextTick(() => { this.scrollToBottom(); });
-            try {
-                const response = await fetch('/api/ai/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=&quot;csrf-token&quot;]').content
-                    },
-                    body: JSON.stringify({
-                        message: userMsg,
-                        devotional_context: context,
-                        history: this.messages.slice(0, -1)
-                    })
-                });
-                const data = await response.json();
-                if (data.response) {
-                    this.messages.push({ role: 'ai', content: data.response });
-                } else {
-                    this.messages.push({ role: 'ai', content: data.error || 'Erro na resposta.' });
-                }
-            } catch (e) {
-                this.messages.push({ role: 'ai', content: 'Não consegui me conectar agora.' });
-            } finally {
-                this.isAiLoading = false;
-                this.$nextTick(() => { this.scrollToBottom(); });
-            }
-        },
-
-        scrollToBottom() {
-            // Rola tanto o container do modal quanto o da sidebar (se existir)
-            const containers = document.querySelectorAll('[id^=chat-messages-container]');
-            containers.forEach(c => c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }));
-        },
-
-        formatMarkdown(content) {
-            if (!content) return '';
-            let html = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            html = html.replace(/^\s*[\-\*]\s+(.*)/gm, '• $1');
-            return html;
-        },
-
-        isAutoScrolling: false,
-        scrollPos: 0,
-
-        toggleAutoScroll() {
-            this.isAutoScrolling = !this.isAutoScrolling;
-            if (this.isAutoScrolling) {
-                const container = this.$refs.bibleContainer;
-                if (!container) return;
-                
-                this.scrollPos = container.scrollTop;
-                
-                const scrollStep = () => {
-                    if (!this.isAutoScrolling) return;
-                    
-                    this.scrollPos += 0.15; // Velocidade bem lenta
-                    container.scrollTop = this.scrollPos;
-                    
-                    if (Math.ceil(this.scrollPos + container.clientHeight) >= container.scrollHeight - 10) {
-                        this.isAutoScrolling = false;
-                        return;
-                    }
-                    requestAnimationFrame(scrollStep);
-                };
-                requestAnimationFrame(scrollStep);
-            }
-        },
-
-        async openBibleReader() {
-            const refOld = document.getElementById('ref-old')?.innerText;
-            const refNew = document.getElementById('ref-new')?.innerText;
-            if (!refOld && !refNew) return;
-            this.showBibleModal = true;
-            this.isAutoScrolling = false; // Reset ao abrir
-            this.bibleLoading = true;
-            this.bibleData = null;
-            try {
-                const response = await fetch(`/api/bible/read?ref_old=${encodeURIComponent(refOld || '')}&ref_new=${encodeURIComponent(refNew || '')}`);
-                this.bibleData = await response.json();
-            } catch (e) {
-                console.error('Erro ao buscar texto bíblico', e);
-            } finally {
-                this.bibleLoading = false;
-            }
-        }
-    }"
+    x-data="devotionalApp"
     @close-calendar.window="showCalendar = false">
 
     <!-- Layout Wrapper -->
@@ -200,7 +43,7 @@
                 <nav class="space-y-2">
                     <a href="/" class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold transition-all">
                         <x-lucide-home class="w-5 h-5" />
-                        <span>Devocional</span>
+                        <span>Leitura do Dia</span>
                     </a>
 
                     <button @click="showAiChat = true" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all xl:hidden">
@@ -247,25 +90,103 @@
                 <div id="devotional-display" class="relative">
                     <div id="devotional-card" class="bg-slate-50 dark:bg-slate-900/50 rounded-[40px] sm:rounded-[60px] border border-slate-100 dark:border-slate-800 p-6 sm:p-12 lg:p-16 relative">
 
-                        <!-- Floating Actions (Bottom-Right Responsive) -->
+                        <!-- Floating Actions -->
                         <div class="absolute top-6 right-6 lg:top-10 lg:right-10 flex gap-2 z-20">
-                            <button @click="openBibleReader" id="bible-read-btn" class="hidden items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <button @click="openBibleReader"
+                                x-show="devotionalData"
+                                x-transition
+                                class="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400" x-cloak>
                                 <x-lucide-book-open class="w-5 h-5" />
                                 <span class="font-bold text-sm">Ler</span>
                             </button>
-                            <button id="whatsapp-share-btn" class="hidden p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                            <button @click="shareOnWhatsApp"
+                                x-show="devotionalData"
+                                x-transition
+                                class="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400" x-cloak>
                                 <x-lucide-share-2 class="w-5 h-5" />
                             </button>
                         </div>
 
                         <div id="devotional-content" class="prose prose-slate dark:prose-invert max-w-none">
-                            <!-- Skeleton ou Fallback -->
-                            <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                                <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
-                                    <x-lucide-book-open class="w-12 h-12 text-slate-300 animate-pulse" />
+
+                            <!-- Skeleton Loader -->
+                            <template x-if="isDevotionalLoading">
+                                <div class="animate-pulse space-y-8">
+                                    <div class="space-y-3">
+                                        <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-3/4"></div>
+                                        <div class="space-y-2">
+                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-5/6"></div>
+                                        </div>
+                                    </div>
+                                    <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+                                    <div class="space-y-3">
+                                        <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-2/3"></div>
+                                        <div class="space-y-2">
+                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-4/5"></div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p class="text-slate-500">Selecione uma data para começar seu devocional.</p>
-                            </div>
+                            </template>
+
+                            <!-- Success State -->
+                            <template x-if="!isDevotionalLoading && devotionalData">
+                                <div>
+                                    <div class="mb-10 animate-fade-in-up">
+                                        <span class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
+                                            Leitura do Dia
+                                        </span>
+                                        <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize" x-text="displayDate"></h2>
+                                    </div>
+
+                                    <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
+                                        <article>
+                                            <div class="flex items-center gap-3 mb-4">
+                                                <div class="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                                    <x-lucide-book class="w-5 h-5" />
+                                                </div>
+                                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_old_testament"></h3>
+                                            </div>
+                                            <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_old_testament"></div>
+                                        </article>
+
+                                        <div class="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent"></div>
+
+                                        <article>
+                                            <div class="flex items-center gap-3 mb-4">
+                                                <div class="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                                                    <x-lucide-book-open-check class="w-5 h-5" />
+                                                </div>
+                                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_new_testament"></h3>
+                                            </div>
+                                            <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_new_testament"></div>
+                                        </article>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Error State -->
+                            <template x-if="!isDevotionalLoading && error">
+                                <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                    <div class="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-full text-amber-500">
+                                        <x-lucide-alert-triangle class="w-12 h-12" />
+                                    </div>
+                                    <h3 class="text-xl font-bold">Conteúdo não encontrado</h3>
+                                    <p class="text-slate-500 max-w-xs" x-text="error"></p>
+                                </div>
+                            </template>
+
+                            <!-- Initial State -->
+                            <template x-if="!isDevotionalLoading && !devotionalData && !error">
+                                <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                    <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
+                                        <x-lucide-calendar-days class="w-12 h-12 text-slate-300" />
+                                    </div>
+                                    <p class="text-slate-500">Selecione uma data para começar sau leitura.</p>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -288,7 +209,7 @@
                 <template x-if="messages.length === 0">
                     <div class="flex flex-col items-center justify-center h-full text-center p-8 space-y-4">
                         <div class="p-4 bg-white dark:bg-slate-800 rounded-3xl shadow-sm text-slate-400">
-                            <p class="text-sm">Tire suas dúvidas sobre o devocional de hoje comigo.</p>
+                            <p class="text-sm">Tire suas dúvidas sobre a leitura de hoje comigo.</p>
                         </div>
                     </div>
                 </template>
@@ -514,42 +435,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro/build/vanilla-calendar.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Observer para fechar calendário no mobile após clique
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach(() => {
-                    const calendars = ['#calendar-modal', '#calendar-sidebar'];
-                    calendars.forEach(id => {
-                        const el = document.querySelector(id);
-                        if (el && !el.dataset.listenerAttached) {
-                            el.dataset.listenerAttached = true;
-                            el.addEventListener('click', (e) => {
-                                if (e.target.closest('.vc-day')) {
-                                    setTimeout(() => window.dispatchEvent(new CustomEvent('close-calendar')), 400);
-                                }
-                            });
-                        }
-                    });
-                });
-            });
-            const body = document.querySelector('body');
-            observer.observe(body, {
-                childList: true,
-                subtree: true
-            });
-        });
-    </script>
 
-    <!-- PWA Service Worker -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(reg => console.log('[SW] OK')).catch(err => console.log('[SW] KO'));
-            });
-        }
-    </script>
 </body>
 
 </html>
