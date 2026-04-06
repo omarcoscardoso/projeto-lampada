@@ -68,6 +68,7 @@ jobs:
             DB_PASSWORD=${{ secrets.CLOUD_SQL_PASSWORD}},
             APP_VERSION=${{ github.sha }},
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }}
 
       - name: Exibir URL do Cloud Run
         run: echo "'Service URL:' ${{ steps.deploy.outputs.url }}"

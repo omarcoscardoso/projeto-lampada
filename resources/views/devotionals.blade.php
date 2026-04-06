@@ -370,6 +370,18 @@
                                 <p class="text-slate-500">Não foi possível carregar o texto bíblico para estas referências.</p>
                             </div>
                         </template>
+
+                        <!-- Botão de OK de Leitura -->
+                        <div class="pt-10 pb-20 flex flex-col items-center">
+                            <div class="w-12 h-1 bg-slate-100 dark:bg-slate-800 rounded-full mb-8"></div>
+                            <button
+                                @click="const whatsappUrl = `https://wa.me/?text=${encodeURIComponent('Leitura do dia 🆗')}`; window.open(whatsappUrl, '_blank');"
+                                class="flex items-center gap-2 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-xl shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 text-lg font-bold">
+                                <x-lucide-share-2 class="w-6 h-6" />
+                                Compartilhar OK de Leitura
+                            </button>
+                            <p class="mt-4 text-slate-400 dark:text-slate-500 text-sm">Notifique seu grupo que você completou a leitura!</p>
+                        </div>
                     </div>
                 </template>
             </div>
