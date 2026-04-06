@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'abibliadigital' => [
+        'token' => env('ABIBLIA_DIGITAL_TOKEN'),
+        'base_url' => 'https://www.abibliadigital.com.br/api',
+        'default_version' => env('ABIBLIA_DIGITAL_VERSION', 'nvi'),
+    ],
+
 ];

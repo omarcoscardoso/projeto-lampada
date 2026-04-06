@@ -19,8 +19,7 @@ class DevotionalsTable
             ->columns([
                 TextColumn::make('date')
                     ->label('Data')
-                    ->sortable()
-                    ->state(fn(Devotional $record): string => "{$record->day}/{$record->month}"),
+                    ->state(fn (Devotional $record): string => "{$record->day}/{$record->month}"),
                 TextColumn::make('reference_old_testament')
                     ->label('Antigo Testamento')
                     ->searchable()

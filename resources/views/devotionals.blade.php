@@ -133,6 +133,31 @@
                     // Lists (bullets)
                     html = html.replace(/^\s*[\-\*]\s+(.*)/gm, '• $1');
                     return html;
+                },
+
+                // Bible Modal State
+                showBibleModal: false,
+                bibleLoading: false,
+                bibleData: null,
+
+                async openBibleReader() {
+                    const refOld = document.getElementById('ref-old')?.innerText;
+                    const refNew = document.getElementById('ref-new')?.innerText;
+
+                    if (!refOld && !refNew) return;
+
+                    this.showBibleModal = true;
+                    this.bibleLoading = true;
+                    this.bibleData = null;
+
+                    try {
+                        const response = await fetch(`/api/bible/read?ref_old=${encodeURIComponent(refOld || '')}&ref_new=${encodeURIComponent(refNew || '')}`);
+                        this.bibleData = await response.json();
+                    } catch (e) {
+                        console.error('Erro ao buscar texto bíblico', e);
+                    } finally {
+                        this.bibleLoading = false;
+                    }
                 }
             }"
         @close-calendar.window="showCalendar = false">
@@ -158,11 +183,23 @@
             <div id="devotional-display" class="relative">
                 <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden min-h-[500px] flex flex-col relative">
 
-                    <button
-                        id="whatsapp-share-btn"
-                        class="hidden absolute top-6 right-6 p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400 z-20">
-                        <x-lucide-share-2 class="w-5 h-5" />
-                    </button>
+                    <div class="absolute top-6 right-6 flex gap-2 z-20">
+                        <button
+                            @click="openBibleReader"
+                            id="bible-read-btn"
+                            class="hidden items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            title="Ler Texto Bíblico">
+                            <x-lucide-book-open class="w-5 h-5" />
+                            <span class="font-bold text-sm">Ler</span>
+                        </button>
+
+                        <button
+                            id="whatsapp-share-btn"
+                            class="hidden p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            title="Compartilhar no WhatsApp">
+                            <x-lucide-share-2 class="w-5 h-5" />
+                        </button>
+                    </div>
 
                     <div id="devotional-content" class="p-6 sm:p-8 prose prose-slate dark:prose-invert max-w-none flex-grow">
                         <div class="flex flex-col items-center justify-center h-full py-20 text-center space-y-4">
@@ -253,6 +290,88 @@
                         <x-lucide-send class="w-5 h-5" />
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Modal de Leitura Bíblica -->
+        <div
+            x-show="showBibleModal"
+            class="fixed inset-0 z-[110] flex flex-col bg-white dark:bg-slate-950"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="translate-y-full"
+            x-transition:enter-end="translate-y-0"
+            x-transition:leave="transition ease-in duration-300 transform"
+            x-transition:leave-start="translate-y-0"
+            x-transition:leave-end="translate-y-full"
+            x-cloak>
+
+            <header class="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl">
+                        <x-lucide-book-open class="w-5 h-5" />
+                    </div>
+                    <h2 class="font-bold text-lg">Leitura Bíblica</h2>
+                </div>
+                <button @click="showBibleModal = false" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+                    <x-lucide-x class="w-6 h-6" />
+                </button>
+            </header>
+
+            <div class="flex-grow overflow-y-auto p-6 space-y-8 scrollbar-hide pb-20">
+                <template x-if="bibleLoading">
+                    <div class="flex flex-col items-center justify-center h-64 space-y-4">
+                        <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-slate-500 animate-pulse">Buscando na Bíblia Digital...</p>
+                    </div>
+                </template>
+
+                <template x-if="!bibleLoading && bibleData">
+                    <div class="space-y-16">
+                        <!-- Antigo Testamento -->
+                        <template x-if="bibleData.old_testament && bibleData.old_testament.success">
+                            <div class="space-y-12">
+                                <template x-for="chapter in bibleData.old_testament.chapters" :key="chapter.number">
+                                    <section>
+                                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 border-l-4 border-indigo-500 pl-4" x-text="bibleData.old_testament.book_name + ' ' + chapter.number"></h3>
+                                        <div class="space-y-4">
+                                            <template x-for="verse in chapter.verses" :key="verse.number">
+                                                <p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+                                                    <sup class="text-xs font-bold text-indigo-500 mr-1" x-text="verse.number"></sup>
+                                                    <span x-text="verse.text"></span>
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </section>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Novo Testamento -->
+                        <template x-if="bibleData.new_testament && bibleData.new_testament.success">
+                            <div class="space-y-12 border-t border-slate-200 dark:border-slate-800 pt-16">
+                                <template x-for="chapter in bibleData.new_testament.chapters" :key="chapter.number">
+                                    <section>
+                                        <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-6 border-l-4 border-rose-500 pl-4" x-text="bibleData.new_testament.book_name + ' ' + chapter.number"></h3>
+                                        <div class="space-y-4">
+                                            <template x-for="verse in chapter.verses" :key="verse.number">
+                                                <p class="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
+                                                    <sup class="text-xs font-bold text-rose-500 mr-1" x-text="verse.number"></sup>
+                                                    <span x-text="verse.text"></span>
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </section>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="(!bibleData.old_testament || !bibleData.old_testament.success) && (!bibleData.new_testament || !bibleData.new_testament.success)">
+                            <div class="text-center py-20">
+                                <p class="text-slate-500">Não foi possível carregar o texto bíblico para estas referências.</p>
+                            </div>
+                        </template>
+                    </div>
+                </template>
             </div>
         </div>
 
