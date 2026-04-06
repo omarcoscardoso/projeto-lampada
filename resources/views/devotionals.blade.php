@@ -425,7 +425,7 @@
                                 <p class="text-xs text-slate-400 mt-0.5">Inicia automaticamente com a leitura</p>
                             </div>
                             <button
-                                @click="ttsAutoMusic = !ttsAutoMusic"
+                                @click="ttsAutoMusic = !ttsAutoMusic; updateMusicRealtime()"
                                 :class="ttsAutoMusic ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
                                 class="relative w-11 h-6 rounded-full transition-colors shrink-0 ml-3">
                                 <span
@@ -439,19 +439,19 @@
                         <div class="mb-4">
                             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tom de voz</p>
                             <div class="flex gap-1.5">
-                                <button @click="ttsPitch = 0.5"
+                                <button @click="ttsPitch = 0.5; updateTtsRealtime()"
                                     :class="ttsPitch === 0.5 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
                                     class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
                                     <span>🔈</span>
                                     <span>Grave</span>
                                 </button>
-                                <button @click="ttsPitch = 1.0"
+                                <button @click="ttsPitch = 1.0; updateTtsRealtime()"
                                     :class="ttsPitch === 1.0 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
                                     class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
                                     <span>🔉</span>
                                     <span>Normal</span>
                                 </button>
-                                <button @click="ttsPitch = 1.7"
+                                <button @click="ttsPitch = 1.7; updateTtsRealtime()"
                                     :class="ttsPitch === 1.7 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
                                     class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
                                     <span>🔊</span>
@@ -466,7 +466,7 @@
                             <div class="flex gap-1.5 flex-wrap">
                                 <template x-for="rate in [0.5, 0.75, 1.0, 1.25, 1.5]" :key="rate">
                                     <button
-                                        @click="ttsRate = rate"
+                                        @click="ttsRate = rate; updateTtsRealtime()"
                                         :class="ttsRate === rate ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
                                         class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                                         x-text="rate + '×'">
@@ -474,6 +474,7 @@
                                 </template>
                             </div>
                         </div>
+
                     </div>
                 </div>
 

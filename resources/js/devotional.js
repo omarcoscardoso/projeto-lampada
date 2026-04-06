@@ -22,6 +22,8 @@ export default () => ({
     isMusicPlaying: false,
     ttsAutoMusic: true,
     musicVolume: 0.20,
+    _ttsChunks: [],
+    _currentChunkIndex: 0,
 
     // Devotional specific data
     currentDate: null,
@@ -496,38 +498,9 @@ export default () => ({
             return;
         }
 
-        const chunks = this._splitIntoChunks(text);
-        console.log('[TTS] Total de chunks:', chunks.length, '| Chars totais:', text.length);
-
-        const speakChunk = (index) => {
-            if (index >= chunks.length || !this.isSpeaking) {
-                this.isSpeaking = false;
-                this.isPaused = false;
-                this._utterance = null;
-                if (this._ttsKeepAlive) {
-                    clearInterval(this._ttsKeepAlive);
-                    this._ttsKeepAlive = null;
-                }
-                return;
-            }
-
-            this._utterance = new SpeechSynthesisUtterance(chunks[index]);
-            this._utterance.lang = 'pt-BR';
-            this._utterance.rate = this.ttsRate;
-            this._utterance.pitch = this.ttsPitch;
-            const selectedVoice = this.ttsVoices[this.ttsVoiceIndex] ?? null;
-            if (selectedVoice) { this._utterance.voice = selectedVoice; }
-
-            this._utterance.onend = () => { speakChunk(index + 1); };
-            this._utterance.onerror = (e) => {
-                // 'interrupted' e 'canceled' ocorrem ao pausar/parar — não são erros reais
-                if (e.error === 'interrupted' || e.error === 'canceled') { return; }
-                console.error('[TTS] Erro no chunk', index, ':', e.error);
-                this.stopTts();
-            };
-
-            window.speechSynthesis.speak(this._utterance);
-        };
+        this._ttsChunks = this._splitIntoChunks(text);
+        this._currentChunkIndex = 0;
+        console.log('[TTS] Total de chunks:', this._ttsChunks.length, '| Chars totais:', text.length);
 
         const startSpeaking = () => {
             window.speechSynthesis.cancel();
@@ -538,7 +511,6 @@ export default () => ({
                 this.startAmbientMusic();
             }
 
-            // Keep-alive: workaround para bug do Chrome que pausa silenciosamente após ~15s
             if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
             this._ttsKeepAlive = setInterval(() => {
                 if (window.speechSynthesis.speaking && !this.isPaused) {
@@ -547,13 +519,64 @@ export default () => ({
                 }
             }, 10000);
 
-            speakChunk(0);
+            this.speakChunk(0);
         };
 
         if (this.ttsVoices.length === 0) {
             window.speechSynthesis.addEventListener('voiceschanged', startSpeaking, { once: true });
         } else {
             startSpeaking();
+        }
+    },
+
+    speakChunk(index) {
+        if (index >= this._ttsChunks.length || !this.isSpeaking) {
+            if (index >= this._ttsChunks.length) {
+                this.stopTts();
+            }
+            return;
+        }
+
+        this._currentChunkIndex = index;
+        this._utterance = new SpeechSynthesisUtterance(this._ttsChunks[index]);
+        this._utterance.lang = 'pt-BR';
+        this._utterance.rate = this.ttsRate;
+        this._utterance.pitch = this.ttsPitch;
+
+        const selectedVoice = this.ttsVoices[this.ttsVoiceIndex] ?? null;
+        if (selectedVoice) { this._utterance.voice = selectedVoice; }
+
+        this._utterance.onend = () => {
+            if (this.isSpeaking && !this.isPaused) {
+                this.speakChunk(index + 1);
+            }
+        };
+
+        this._utterance.onerror = (e) => {
+            if (e.error === 'interrupted' || e.error === 'canceled') { return; }
+            console.error('[TTS] Erro no chunk', index, ':', e.error);
+            this.stopTts();
+        };
+
+        window.speechSynthesis.speak(this._utterance);
+    },
+
+    updateMusicRealtime() {
+        if (!this.isSpeaking) return;
+        if (this.ttsAutoMusic && !this.isMusicPlaying) {
+            this.startAmbientMusic();
+        } else if (!this.ttsAutoMusic && this.isMusicPlaying) {
+            this.stopAmbientMusic();
+        }
+    },
+
+    updateTtsRealtime() {
+        if (!this.isSpeaking) return;
+
+        // Reiniciar o chunk atual com as novas configurações (pitch, rate, voice)
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            this.speakChunk(this._currentChunkIndex);
         }
     },
 
