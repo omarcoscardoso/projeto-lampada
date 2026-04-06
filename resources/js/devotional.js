@@ -11,6 +11,17 @@ export default () => ({
     bibleData: null,
     isAutoScrolling: false,
     scrollPos: 0,
+    isSpeaking: false,
+    isPaused: false,
+    showTtsSettings: false,
+    ttsVoices: [],
+    ttsVoiceIndex: 0,
+    ttsRate: 0.9,
+    ttsPitch: 0.5,
+    ttsAnnounceVerses: false,
+    isMusicPlaying: false,
+    ttsAutoMusic: true,
+    musicVolume: 0.20,
 
     // Devotional specific data
     currentDate: null,
@@ -23,6 +34,24 @@ export default () => ({
         this.initCalendars();
         this.fetchDevotional(this.currentDate);
         this.initMobileCalendarObserver();
+        this.initTtsVoices();
+    },
+
+    initTtsVoices() {
+        if (!('speechSynthesis' in window)) { return; }
+
+        const loadVoices = () => {
+            const all = window.speechSynthesis.getVoices();
+            this.ttsVoices = all.filter(v => v.lang.startsWith('pt'));
+            if (this.ttsVoices.length === 0) {
+                // Fallback: mostrar todas as vozes se não houver pt-BR
+                this.ttsVoices = all;
+            }
+            this.ttsVoiceIndex = 0;
+        };
+
+        loadVoices();
+        window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
     },
 
     getFormattedDate(date) {
@@ -246,5 +275,300 @@ export default () => ({
         } finally {
             this.bibleLoading = false;
         }
-    }
+    },
+
+    closeBibleModal() {
+        this.stopTts();
+        this.stopAmbientMusic();
+        this.isAutoScrolling = false;
+        this.showBibleModal = false;
+    },
+
+    toggleAmbientMusic() {
+        if (this.isMusicPlaying) {
+            this.stopAmbientMusic();
+        } else {
+            this.startAmbientMusic();
+        }
+    },
+
+    startAmbientMusic() {
+        if (this._audioCtx) { return; }
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+            alert('Seu navegador não suporta áudio ambiente.');
+            return;
+        }
+
+        const ctx = new AudioContext();
+        this._audioCtx = ctx;
+        this._musicNodes = [];
+
+        // Master gain com fade-in suave (4s)
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(0, ctx.currentTime);
+        master.gain.linearRampToValueAtTime(this.musicVolume, ctx.currentTime + 4);
+        master.connect(ctx.destination);
+        this._musicMaster = master;
+
+        // --- Reverb via feedback delay ---
+        const delay = ctx.createDelay(2.0);
+        const fbGain = ctx.createGain();
+        const delayFilter = ctx.createBiquadFilter();
+        delay.delayTime.value = 0.65;
+        fbGain.gain.value = 0.42;
+        delayFilter.type = 'lowpass';
+        delayFilter.frequency.value = 700;
+        delay.connect(delayFilter);
+        delayFilter.connect(fbGain);
+        fbGain.connect(delay); // loop de feedback
+
+        const wetGain = ctx.createGain();
+        wetGain.gain.value = 0.35;
+        delayFilter.connect(wetGain);
+        wetGain.connect(master);
+
+        // Bus do PAD: seco vai pro master, molhado vai pro delay
+        const padBus = ctx.createGain();
+        padBus.gain.value = 1;
+        padBus.connect(master);
+        padBus.connect(delay);
+
+        // --- PAD: Acorde Lá menor (A3, C4, E4, A4) ---
+        const padNotes = [220, 261.63, 329.63, 440];
+        padNotes.forEach((freq, i) => {
+            // 2 osciladores por nota levemente desafinados = efeito chorus
+            [-5, 5].forEach(detuneCents => {
+                const osc = ctx.createOscillator();
+                const oscGain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.detune.value = detuneCents;
+
+                filter.type = 'lowpass';
+                filter.frequency.value = 1400;
+
+                oscGain.gain.value = 0.045;
+
+                // LFO individual para tremolo suave (ritmos diferentes por nota)
+                const lfo = ctx.createOscillator();
+                const lfoGain = ctx.createGain();
+                lfo.type = 'sine';
+                lfo.frequency.value = 0.06 + i * 0.02 + (detuneCents > 0 ? 0.01 : 0);
+                lfoGain.gain.value = 0.012;
+                lfo.connect(lfoGain);
+                lfoGain.connect(oscGain.gain);
+                lfo.start();
+
+                osc.connect(filter);
+                filter.connect(oscGain);
+                oscGain.connect(padBus);
+                osc.start();
+
+                this._musicNodes.push(osc, lfo);
+            });
+        });
+
+        // --- Binaural beats (requer fones de ouvido) ---
+        // Esquerdo: 100 Hz | Direito: 108 Hz → batida de 8 Hz = onda alpha (foco relaxado)
+        const merger = ctx.createChannelMerger(2);
+        const binauralGain = ctx.createGain();
+        binauralGain.gain.value = 0.07;
+        merger.connect(binauralGain);
+        binauralGain.connect(master);
+
+        const leftOsc = ctx.createOscillator();
+        leftOsc.type = 'sine';
+        leftOsc.frequency.value = 100;
+
+        const rightOsc = ctx.createOscillator();
+        rightOsc.type = 'sine';
+        rightOsc.frequency.value = 108;
+
+        const leftGain = ctx.createGain();
+        const rightGain = ctx.createGain();
+        leftOsc.connect(leftGain);
+        rightOsc.connect(rightGain);
+        leftGain.connect(merger, 0, 0);  // canal esquerdo
+        rightGain.connect(merger, 0, 1); // canal direito
+
+        leftOsc.start();
+        rightOsc.start();
+        this._musicNodes.push(leftOsc, rightOsc);
+
+        this.isMusicPlaying = true;
+    },
+
+    stopAmbientMusic() {
+        if (!this._audioCtx) { return; }
+
+        // Fade-out suave (2s) antes de destruir o contexto
+        const gain = this._musicMaster;
+        const ctx = this._audioCtx;
+        gain.gain.cancelScheduledValues(ctx.currentTime);
+        gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+
+        setTimeout(() => {
+            if (this._musicNodes) {
+                this._musicNodes.forEach(node => { try { node.stop(); } catch (_) { } });
+            }
+            ctx.close();
+            this._audioCtx = null;
+            this._musicNodes = null;
+            this._musicMaster = null;
+            this.isMusicPlaying = false;
+        }, 2200);
+    },
+
+    extractBibleText() {
+        if (!this.bibleData) { return ''; }
+
+        const parts = [];
+        const addTestament = (testament) => {
+            if (!testament || !testament.success) { return; }
+            testament.chapters.forEach(chapter => {
+                if (this.ttsAnnounceVerses) {
+                    parts.push(`${testament.book_name} capítulo ${chapter.number}.`);
+                }
+                chapter.verses.forEach(verse => {
+                    if (this.ttsAnnounceVerses) {
+                        parts.push(`Versículo ${verse.number}. ${verse.text}`);
+                    } else {
+                        parts.push(verse.text);
+                    }
+                });
+            });
+        };
+
+        addTestament(this.bibleData.old_testament);
+        addTestament(this.bibleData.new_testament);
+
+        return parts.join(' ');
+    },
+
+    // Dividir o texto em chunks por frase para contornar bug do Chrome com textos longos
+    _splitIntoChunks(text, maxLength = 1000) {
+        const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
+        const chunks = [];
+        let current = '';
+
+        sentences.forEach(sentence => {
+            if ((current + sentence).length > maxLength && current.length > 0) {
+                chunks.push(current.trim());
+                current = sentence;
+            } else {
+                current += sentence;
+            }
+        });
+
+        if (current.trim().length > 0) {
+            chunks.push(current.trim());
+        }
+
+        return chunks;
+    },
+
+    toggleTts() {
+        if (!('speechSynthesis' in window)) {
+            alert('Seu navegador não suporta leitura em voz alta.');
+            return;
+        }
+
+        if (this.isSpeaking && !this.isPaused) {
+            window.speechSynthesis.pause();
+            this.isPaused = true;
+            return;
+        }
+
+        if (this.isSpeaking && this.isPaused) {
+            window.speechSynthesis.resume();
+            this.isPaused = false;
+            return;
+        }
+
+        const text = this.extractBibleText();
+        if (!text) {
+            console.warn('[TTS] Nenhum texto extraído do bibleData:', this.bibleData);
+            return;
+        }
+
+        const chunks = this._splitIntoChunks(text);
+        console.log('[TTS] Total de chunks:', chunks.length, '| Chars totais:', text.length);
+
+        const speakChunk = (index) => {
+            if (index >= chunks.length || !this.isSpeaking) {
+                this.isSpeaking = false;
+                this.isPaused = false;
+                this._utterance = null;
+                if (this._ttsKeepAlive) {
+                    clearInterval(this._ttsKeepAlive);
+                    this._ttsKeepAlive = null;
+                }
+                return;
+            }
+
+            this._utterance = new SpeechSynthesisUtterance(chunks[index]);
+            this._utterance.lang = 'pt-BR';
+            this._utterance.rate = this.ttsRate;
+            this._utterance.pitch = this.ttsPitch;
+            const selectedVoice = this.ttsVoices[this.ttsVoiceIndex] ?? null;
+            if (selectedVoice) { this._utterance.voice = selectedVoice; }
+
+            this._utterance.onend = () => { speakChunk(index + 1); };
+            this._utterance.onerror = (e) => {
+                // 'interrupted' e 'canceled' ocorrem ao pausar/parar — não são erros reais
+                if (e.error === 'interrupted' || e.error === 'canceled') { return; }
+                console.error('[TTS] Erro no chunk', index, ':', e.error);
+                this.stopTts();
+            };
+
+            window.speechSynthesis.speak(this._utterance);
+        };
+
+        const startSpeaking = () => {
+            window.speechSynthesis.cancel();
+            this.isSpeaking = true;
+            this.isPaused = false;
+
+            if (this.ttsAutoMusic) {
+                this.startAmbientMusic();
+            }
+
+            // Keep-alive: workaround para bug do Chrome que pausa silenciosamente após ~15s
+            if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
+            this._ttsKeepAlive = setInterval(() => {
+                if (window.speechSynthesis.speaking && !this.isPaused) {
+                    window.speechSynthesis.pause();
+                    window.speechSynthesis.resume();
+                }
+            }, 10000);
+
+            speakChunk(0);
+        };
+
+        if (this.ttsVoices.length === 0) {
+            window.speechSynthesis.addEventListener('voiceschanged', startSpeaking, { once: true });
+        } else {
+            startSpeaking();
+        }
+    },
+
+    stopTts() {
+        if (this._ttsKeepAlive) {
+            clearInterval(this._ttsKeepAlive);
+            this._ttsKeepAlive = null;
+        }
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+        this.stopAmbientMusic();
+        this.isSpeaking = false;
+        this.isPaused = false;
+        this._utterance = null;
+    },
 });
+

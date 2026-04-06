@@ -346,7 +346,7 @@
                 <!-- Botão Auto-Scroll -->
                 <button
                     @click="toggleAutoScroll"
-                    :class="isAutoScrolling ? 'bg-amber-100 text-amber-600 border-amber-200' : 'bg-slate-100 text-slate-500 border-slate-200'"
+                    :class="isAutoScrolling ? 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'"
                     class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95">
                     <template x-if="isAutoScrolling">
                         <x-lucide-pause-circle class="w-5 h-5 animate-pulse" />
@@ -357,11 +357,132 @@
                     <span class="text-xs font-bold hidden sm:inline" x-text="isAutoScrolling ? 'Pausar Rolagem' : 'Auto Rolagem'"></span>
                 </button>
 
-                <button @click="showBibleModal = false" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+                <!-- Botão Leitura em Voz Alta (TTS) -->
+                <div class="relative">
+                    <div class="flex items-center gap-1">
+                        <button
+                            @click="toggleTts"
+                            :class="isSpeaking && !isPaused ? 'bg-violet-100 text-violet-600 border-violet-200 dark:bg-violet-900/30 dark:border-violet-700' : (isSpeaking && isPaused ? 'bg-sky-100 text-sky-600 border-sky-200 dark:bg-sky-900/30 dark:border-sky-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700')"
+                            class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95"
+                            :title="isSpeaking && !isPaused ? 'Pausar leitura' : (isSpeaking && isPaused ? 'Retomar leitura' : 'Ler em voz alta')">
+                            <template x-if="isSpeaking && !isPaused">
+                                <x-lucide-mic class="w-5 h-5 animate-pulse" />
+                            </template>
+                            <template x-if="isSpeaking && isPaused">
+                                <x-lucide-play class="w-5 h-5" />
+                            </template>
+                            <template x-if="!isSpeaking">
+                                <x-lucide-volume-2 class="w-5 h-5" />
+                            </template>
+                            <span class="text-xs font-bold hidden sm:inline"
+                                x-text="isSpeaking && !isPaused ? 'Pausar' : (isSpeaking && isPaused ? 'Retomar' : 'Ouvir')"></span>
+                        </button>
+
+                        <!-- Engrenagem de configurações TTS -->
+                        <button
+                            @click="showTtsSettings = !showTtsSettings"
+                            :class="showTtsSettings ? 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'"
+                            class="p-1.5 rounded-lg transition-all hover:scale-105 active:scale-95"
+                            title="Configurações de voz">
+                            <x-lucide-settings-2 class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <!-- Painel de configurações TTS -->
+                    <div
+                        x-show="showTtsSettings"
+                        @click.outside="showTtsSettings = false"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95 translate-y-1"
+                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 scale-95 translate-y-1"
+                        class="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 z-50"
+                        x-cloak>
+
+                        <!-- Toggle: Anunciar versículos -->
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Anunciar versículos</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Ler "Versículo 1, 2..." ou texto corrido</p>
+                            </div>
+                            <button
+                                @click="ttsAnnounceVerses = !ttsAnnounceVerses"
+                                :class="ttsAnnounceVerses ? 'bg-violet-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                class="relative w-11 h-6 rounded-full transition-colors shrink-0 ml-3">
+                                <span
+                                    :class="ttsAnnounceVerses ? 'translate-x-5' : 'translate-x-1'"
+                                    class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ease-in-out block">
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Toggle: Música de Foco -->
+                        <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                            <div>
+                                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Música de foco</p>
+                                <p class="text-xs text-slate-400 mt-0.5">Inicia automaticamente com a leitura</p>
+                            </div>
+                            <button
+                                @click="ttsAutoMusic = !ttsAutoMusic"
+                                :class="ttsAutoMusic ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                class="relative w-11 h-6 rounded-full transition-colors shrink-0 ml-3">
+                                <span
+                                    :class="ttsAutoMusic ? 'translate-x-5' : 'translate-x-1'"
+                                    class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ease-in-out block">
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Tom (Pitch) -->
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tom de voz</p>
+                            <div class="flex gap-1.5">
+                                <button @click="ttsPitch = 0.5"
+                                    :class="ttsPitch === 0.5 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                                    <span>🔈</span>
+                                    <span>Grave</span>
+                                </button>
+                                <button @click="ttsPitch = 1.0"
+                                    :class="ttsPitch === 1.0 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                                    <span>🔉</span>
+                                    <span>Normal</span>
+                                </button>
+                                <button @click="ttsPitch = 1.7"
+                                    :class="ttsPitch === 1.7 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                                    <span>🔊</span>
+                                    <span>Agudo</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Velocidade -->
+                        <div class="mb-4">
+                            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Velocidade</p>
+                            <div class="flex gap-1.5 flex-wrap">
+                                <template x-for="rate in [0.5, 0.75, 1.0, 1.25, 1.5]" :key="rate">
+                                    <button
+                                        @click="ttsRate = rate"
+                                        :class="ttsRate === rate ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                                        x-text="rate + '×'">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button @click="closeBibleModal" class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
                     <x-lucide-x class="w-6 h-6 lg:w-8 lg:h-8" />
                 </button>
             </div>
         </header>
+
 
         <div x-ref="bibleContainer" class="flex-grow overflow-y-auto p-6 lg:p-20 scrollbar-hide pb-20">
             <div class="max-w-4xl mx-auto">
