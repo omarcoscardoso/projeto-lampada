@@ -27,8 +27,8 @@
         @livewireStyles
     </head>
     <body class="bg-white dark:bg-black font-sans antialiased text-slate-900 dark:text-slate-100 h-full overflow-hidden"
-        x-data="devotionalApp"
-        @close-calendar.window="showCalendar = false">
+        x-data="lampadaApp"
+        @close-calendar.window="calShowCalendar = false">
         
         {{ $slot }}
         

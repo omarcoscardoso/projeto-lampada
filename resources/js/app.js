@@ -1,13 +1,25 @@
 import './bootstrap';
 import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
-import devotionalApp from './devotional';
+import { devotionalApp } from './modules/devotional';
+import { calendarApp } from './modules/calendar';
+import { ambientMusic } from './modules/ambient-music';
+import { ttsHandler } from './modules/tts';
+import { aiChat } from './modules/ai-chat';
+import { whatsappHandler } from './modules/whatsapp';
 
 // Import Vanilla Calendar CSS
 import 'vanilla-calendar-pro/styles/index.css';
 import 'vanilla-calendar-pro/styles/themes/light.css';
 import 'vanilla-calendar-pro/styles/themes/dark.css';
 
-Alpine.data('devotionalApp', devotionalApp);
+Alpine.data('lampadaApp', () => ({
+    ...devotionalApp(),   // Lógica base que você já tinha
+    ...calendarApp(),     // Lógica do calendario
+    ...ambientMusic(),    // Lógica de áudio Web Audio API
+    ...ttsHandler(),      // Lógica de Speech Synthesis
+    ...aiChat(),          // Lógica de integração com API de IA
+    ...whatsappHandler(),
+}));
 
 Livewire.start();
 

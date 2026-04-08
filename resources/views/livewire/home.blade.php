@@ -70,7 +70,7 @@
                     <div id="devotional-content" class="prose prose-slate dark:prose-invert max-w-none">
 
                         <!-- Skeleton Loader -->
-                        <template x-if="isDevotionalLoading">
+                        <template x-if="calDevotionalLoading">
                             <div class="animate-pulse space-y-8">
                                 <div class="space-y-3">
                                     <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-3/4"></div>
@@ -92,7 +92,7 @@
                         </template>
 
                         <!-- Success State -->
-                        <template x-if="!isDevotionalLoading && devotionalData">
+                        <template x-if="!calDevotionalLoading && devotionalData">
                             <div>
                                 <div class="mb-10 animate-fade-in-up">
                                     <span class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
@@ -128,7 +128,7 @@
                         </template>
 
                         <!-- Error State -->
-                        <template x-if="!isDevotionalLoading && error">
+                        <template x-if="!calDevotionalLoading && error">
                             <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
                                 <div class="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-full text-amber-500">
                                     <x-lucide-alert-triangle class="w-12 h-12" />
@@ -139,7 +139,7 @@
                         </template>
 
                         <!-- Initial State -->
-                        <template x-if="!isDevotionalLoading && !devotionalData && !error">
+                        <template x-if="!calDevotionalLoading && !devotionalData && !error">
                             <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
                                 <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
                                     <x-lucide-calendar-days class="w-12 h-12 text-slate-300" />
