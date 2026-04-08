@@ -1,269 +1,229 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+<div class="flex h-screen w-full overflow-hidden">
 
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1e3a5f">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Lâmpada">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-
-    <title>Leitura Bíblica Diária - {{ config('app.name', 'Lâmpada') }}</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
-
-    <!-- Styles / Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-
-</head>
-
-<body class="bg-white dark:bg-black font-sans antialiased text-slate-900 dark:text-slate-100 h-full overflow-hidden"
-    x-data="devotionalApp"
-    @close-calendar.window="showCalendar = false">
-
-    <!-- Layout Wrapper -->
-    <div class="flex h-screen w-full overflow-hidden">
-
-        <!-- SIDEBAR ESQUERDA (Desktop - LG) -->
-        <aside class="hidden lg:flex flex-col w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0">
-            <div class="p-6">
-                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-10 w-auto mb-10">
-
-                <nav class="space-y-2">
-                    <a href="/" class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold transition-all">
-                        <x-lucide-home class="w-5 h-5" />
-                        <span>Leitura do Dia</span>
-                    </a>
-
-                    <button @click="showAiChat = true" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all xl:hidden">
-                        <x-lucide-siren class="w-5 h-5" />
-                        <span>Lampião AI</span>
-                    </button>
-
-                    <a href="https://iprviamao.com.br/lampada/" target="_blank" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                        <x-lucide-info class="w-5 h-5" />
-                        <span>Sobre</span>
-                    </a>
-
-                    <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                        <x-lucide-layout-dashboard class="w-5 h-5" />
-                        <span>Painel Admin</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Calendário Fixo na Sidebar -->
-            <div class="mt-auto p-4">
-                <div class="bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-sm border border-slate-100 dark:border-slate-700">
-                    <div id="calendar-sidebar" class="vanilla-calendar light dark:dark !w-full"></div>
-                </div>
-                <p class="text-center text-[10px] text-slate-400 mt-4">Lâmpada APP &copy; 2026</p>
-            </div>
-        </aside>
-
-        <!-- MAIN AREA (Content) -->
-        <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-black relative overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
-
-            <!-- Mobile Header -->
-            <header class="lg:hidden sticky top-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-                <div class="flex items-center justify-between px-4 h-16">
-                    <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-8 w-auto">
-                    <button @click="showCalendar = true" class="p-2 text-amber-600 dark:text-amber-500 rounded-full bg-amber-50 dark:bg-amber-900/30">
-                        <x-lucide-calendar class="w-6 h-6" />
-                    </button>
-                </div>
-            </header>
-
-            <!-- Container de Conteúdo (Max-width para leitura) -->
-            <div class="mx-auto w-full max-w-4xl p-4 lg:p-10">
-                <div id="devotional-display" class="relative">
-                    <div id="devotional-card" class="bg-slate-50 dark:bg-slate-900/50 rounded-[40px] sm:rounded-[60px] border border-slate-100 dark:border-slate-800 p-6 sm:p-12 lg:p-16 relative">
-
-                        <!-- Floating Actions -->
-                        <div class="absolute top-6 right-6 lg:top-10 lg:right-10 flex gap-2 z-20">
-                            <button @click="openBibleReader"
-                                x-show="devotionalData"
-                                x-transition
-                                class="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400" x-cloak>
-                                <x-lucide-book-open class="w-5 h-5" />
-                                <span class="font-bold text-sm">Ler</span>
-                            </button>
-                            <button @click="shareOnWhatsApp"
-                                x-show="devotionalData"
-                                x-transition
-                                class="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400" x-cloak>
-                                <x-lucide-share-2 class="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div id="devotional-content" class="prose prose-slate dark:prose-invert max-w-none">
-
-                            <!-- Skeleton Loader -->
-                            <template x-if="isDevotionalLoading">
-                                <div class="animate-pulse space-y-8">
-                                    <div class="space-y-3">
-                                        <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-3/4"></div>
-                                        <div class="space-y-2">
-                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
-                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
-                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-5/6"></div>
-                                        </div>
-                                    </div>
-                                    <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
-                                    <div class="space-y-3">
-                                        <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-2/3"></div>
-                                        <div class="space-y-2">
-                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
-                                            <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-4/5"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- Success State -->
-                            <template x-if="!isDevotionalLoading && devotionalData">
-                                <div>
-                                    <div class="mb-10 animate-fade-in-up">
-                                        <span class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
-                                            Leitura do Dia
-                                        </span>
-                                        <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize" x-text="displayDate"></h2>
-                                    </div>
-
-                                    <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
-                                        <article>
-                                            <div class="flex items-center gap-3 mb-4">
-                                                <div class="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                                                    <x-lucide-book class="w-5 h-5" />
-                                                </div>
-                                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_old_testament"></h3>
-                                            </div>
-                                            <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_old_testament"></div>
-                                        </article>
-
-                                        <div class="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent"></div>
-
-                                        <article>
-                                            <div class="flex items-center gap-3 mb-4">
-                                                <div class="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-                                                    <x-lucide-book-open-check class="w-5 h-5" />
-                                                </div>
-                                                <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_new_testament"></h3>
-                                            </div>
-                                            <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_new_testament"></div>
-                                        </article>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <!-- Error State -->
-                            <template x-if="!isDevotionalLoading && error">
-                                <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                                    <div class="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-full text-amber-500">
-                                        <x-lucide-alert-triangle class="w-12 h-12" />
-                                    </div>
-                                    <h3 class="text-xl font-bold">Conteúdo não encontrado</h3>
-                                    <p class="text-slate-500 max-w-xs" x-text="error"></p>
-                                </div>
-                            </template>
-
-                            <!-- Initial State -->
-                            <template x-if="!isDevotionalLoading && !devotionalData && !error">
-                                <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                                    <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
-                                        <x-lucide-calendar-days class="w-12 h-12 text-slate-300" />
-                                    </div>
-                                    <p class="text-slate-500">Selecione uma data para começar sau leitura.</p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- SIDEBAR DIREITA (Desktop - XL - IA Chat Persistente) -->
-        <aside class="hidden xl:flex flex-col w-[400px] bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shrink-0">
-            <header class="h-20 flex items-center gap-4 px-6 border-b border-slate-200 dark:border-slate-800">
-                <div class="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl">
-                    <x-lucide-siren class="w-6 h-6" />
-                </div>
-                <div>
-                    <h2 class="font-bold text-lg leading-tight">Assistente Lampião</h2>
-                    <span class="text-xs text-emerald-500 font-medium">Online para ajudar</span>
-                </div>
-            </header>
-
-            <div id="chat-messages-container-sidebar" class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
-                <template x-if="messages.length === 0">
-                    <div class="flex flex-col items-center justify-center h-full text-center p-8 space-y-4">
-                        <div class="p-4 bg-white dark:bg-slate-800 rounded-3xl shadow-sm text-slate-400">
-                            <p class="text-sm">Tire suas dúvidas sobre a leitura de hoje comigo.</p>
-                        </div>
-                    </div>
-                </template>
-                <template x-for="(msg, index) in messages" :key="index">
-                    <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
-                        <div :class="msg.role === 'user' ? 'bg-amber-600 text-white rounded-2xl rounded-tr-none max-w-[90%] p-4 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-none max-w-[90%] p-4 shadow-sm border border-slate-100 dark:border-slate-700'">
-                            <div class="text-sm leading-relaxed whitespace-pre-line" x-html="msg.role === 'ai' ? formatMarkdown(msg.content) : msg.content"></div>
-                        </div>
-                    </div>
-                </template>
-                <div x-show="isAiLoading" class="flex justify-start">
-                    <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-700">
-                        <div class="flex gap-1">
-                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                            <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
-                <form @submit.prevent="sendToAi" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
-                    <input x-model="userInput" type="text" placeholder="Pergunte algo..." class="flex-1 bg-transparent border-none px-4 py-3 text-sm focus:ring-0 focus:outline-none dark:text-white">
-                    <button type="submit" :disabled="!userInput.trim() || isAiLoading" class="p-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-colors disabled:opacity-50">
-                        <x-lucide-send class="w-5 h-5" />
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- MOBILE NAVIGATION (Fixed Bottom) -->
-        <nav class="lg:hidden fixed bottom-0 left-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe">
-            <div class="flex items-center justify-between h-16 px-4">
-                <a href="/" class="flex flex-col items-center justify-center flex-1 text-amber-600 dark:text-amber-500">
-                    <x-lucide-home class="w-6 h-6 mb-1" />
-                    <span class="text-[10px] font-medium">Início</span>
+    <!-- SIDEBAR ESQUERDA (Desktop - LG) -->
+    <aside class="hidden lg:flex flex-col w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0">
+        <div class="p-6">
+            <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-10 w-auto mb-10">
+            <nav class="space-y-2">
+                <a href="/" class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold transition-all">
+                    <x-lucide-home class="w-5 h-5" />
+                    <span>Leitura do Dia</span>
                 </a>
-                <button @click="showAiChat = true" class="flex flex-col items-center justify-center flex-1 text-slate-400">
-                    <x-lucide-siren class="w-6 h-6 mb-1" />
-                    <span class="text-[10px] font-medium">Lampião</span>
+                <button @click="showAiChat = true" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all xl:hidden">
+                    <x-lucide-siren class="w-5 h-5" />
+                    <span>Lampião AI</span>
                 </button>
-                <a href="https://iprviamao.com.br/lampada/" target="_blank" class="flex flex-col items-center justify-center flex-1 text-slate-400">
-                    <x-lucide-info class="w-6 h-6 mb-1" />
-                    <span class="text-[10px] font-medium">Sobre</span>
+                <a href="https://iprviamao.com.br/lampada/" target="_blank" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+                    <x-lucide-info class="w-5 h-5" />
+                    <span>Sobre</span>
                 </a>
-                <a href="/admin" class="flex flex-col items-center justify-center flex-1 text-slate-400">
-                    <x-lucide-layout-dashboard class="w-6 h-6 mb-1" />
-                    <span class="text-[10px] font-medium">Admin</span>
+                <a href="/admin" class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
+                    <x-lucide-layout-dashboard class="w-5 h-5" />
+                    <span>Painel Admin</span>
                 </a>
+            </nav>
+        </div>
+        <!-- Calendário Fixo na Sidebar -->
+        <div class="mt-auto p-4">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-sm border border-slate-100 dark:border-slate-700">
+                <div id="calendar-sidebar" class="vanilla-calendar light dark:dark !w-full"></div>
             </div>
-        </nav>
+            <p class="text-center text-[10px] text-slate-400 mt-4">Lâmpada APP &copy; 2026</p>
+        </div>
+    </aside>
 
-    </div>
+    <!-- MAIN AREA (Content) -->
+    <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-black relative overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
+    
+        <!-- Mobile Header -->
+        <header class="lg:hidden sticky top-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center justify-between px-4 h-16">
+                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-8 w-auto">
+                <button @click="showCalendar = true" class="p-2 text-amber-600 dark:text-amber-500 rounded-full bg-amber-50 dark:bg-amber-900/30">
+                    <x-lucide-calendar class="w-6 h-6" />
+                </button>
+            </div>
+        </header>
+
+        <!-- Container de Conteúdo (Max-width para leitura) -->
+        <div class="mx-auto w-full max-w-4xl p-4 lg:p-10">
+            <div id="devotional-display" class="relative">
+                <div id="devotional-card" class="bg-slate-50 dark:bg-slate-900/50 rounded-[40px] sm:rounded-[60px] border border-slate-100 dark:border-slate-800 p-6 sm:p-12 lg:p-16 relative">
+
+                    <!-- Floating Actions -->
+                    <div class="absolute top-6 right-6 lg:top-10 lg:right-10 flex gap-2 z-20">
+                        <button @click="openBibleReader"
+                            x-show="devotionalData"
+                            x-transition
+                            class="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-400" x-cloak>
+                            <x-lucide-book-open class="w-5 h-5" />
+                            <span class="font-bold text-sm">Ler</span>
+                        </button>
+                        <button @click="shareOnWhatsApp"
+                            x-show="devotionalData"
+                            x-transition
+                            class="p-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-400" x-cloak>
+                            <x-lucide-share-2 class="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div id="devotional-content" class="prose prose-slate dark:prose-invert max-w-none">
+
+                        <!-- Skeleton Loader -->
+                        <template x-if="isDevotionalLoading">
+                            <div class="animate-pulse space-y-8">
+                                <div class="space-y-3">
+                                    <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-3/4"></div>
+                                    <div class="space-y-2">
+                                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-5/6"></div>
+                                    </div>
+                                </div>
+                                <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+                                <div class="space-y-3">
+                                    <div class="h-6 bg-slate-200 dark:bg-slate-800 rounded-full w-2/3"></div>
+                                    <div class="space-y-2">
+                                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                                        <div class="h-4 bg-slate-200 dark:bg-slate-800 rounded-full w-4/5"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Success State -->
+                        <template x-if="!isDevotionalLoading && devotionalData">
+                            <div>
+                                <div class="mb-10 animate-fade-in-up">
+                                    <span class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
+                                        Leitura do Dia
+                                    </span>
+                                    <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize" x-text="displayDate"></h2>
+                                </div>
+
+                                <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
+                                    <article>
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                                                <x-lucide-book class="w-5 h-5" />
+                                            </div>
+                                            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_old_testament"></h3>
+                                        </div>
+                                        <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_old_testament"></div>
+                                    </article>
+
+                                    <div class="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-800 to-transparent"></div>
+
+                                    <article>
+                                        <div class="flex items-center gap-3 mb-4">
+                                            <div class="h-8 w-8 rounded-lg bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                                                <x-lucide-book-open-check class="w-5 h-5" />
+                                            </div>
+                                            <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100" x-text="devotionalData.reference_new_testament"></h3>
+                                        </div>
+                                        <div class="text-slate-600 dark:text-slate-400 leading-relaxed text-lg" x-html="devotionalData.content_new_testament"></div>
+                                    </article>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Error State -->
+                        <template x-if="!isDevotionalLoading && error">
+                            <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                <div class="p-4 bg-amber-50 dark:bg-amber-900/30 rounded-full text-amber-500">
+                                    <x-lucide-alert-triangle class="w-12 h-12" />
+                                </div>
+                                <h3 class="text-xl font-bold">Conteúdo não encontrado</h3>
+                                <p class="text-slate-500 max-w-xs" x-text="error"></p>
+                            </div>
+                        </template>
+
+                        <!-- Initial State -->
+                        <template x-if="!isDevotionalLoading && !devotionalData && !error">
+                            <div class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                                <div class="p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
+                                    <x-lucide-calendar-days class="w-12 h-12 text-slate-300" />
+                                </div>
+                                <p class="text-slate-500">Selecione uma data para começar sau leitura.</p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- SIDEBAR DIREITA (Desktop - XL - IA Chat Persistente) -->
+    <aside class="hidden xl:flex flex-col w-[400px] bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shrink-0">
+        <header class="h-20 flex items-center gap-4 px-6 border-b border-slate-200 dark:border-slate-800">
+            <div class="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-xl">
+                <x-lucide-siren class="w-6 h-6" />
+            </div>
+            <div>
+                <h2 class="font-bold text-lg leading-tight">Assistente Lampião</h2>
+                <span class="text-xs text-emerald-500 font-medium">Online para ajudar</span>
+            </div>
+        </header>
+
+        <div id="chat-messages-container-sidebar" class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-hide">
+            <template x-if="messages.length === 0">
+                <div class="flex flex-col items-center justify-center h-full text-center p-8 space-y-4">
+                    <div class="p-4 bg-white dark:bg-slate-800 rounded-3xl shadow-sm text-slate-400">
+                        <p class="text-sm">Tire suas dúvidas sobre a leitura de hoje comigo.</p>
+                    </div>
+                </div>
+            </template>
+            <template x-for="(msg, index) in messages" :key="index">
+                <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+                    <div :class="msg.role === 'user' ? 'bg-amber-600 text-white rounded-2xl rounded-tr-none max-w-[90%] p-4 shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-none max-w-[90%] p-4 shadow-sm border border-slate-100 dark:border-slate-700'">
+                        <div class="text-sm leading-relaxed whitespace-pre-line" x-html="msg.role === 'ai' ? formatMarkdown(msg.content) : msg.content"></div>
+                    </div>
+                </div>
+            </template>
+            <div x-show="isAiLoading" class="flex justify-start">
+                <div class="bg-white dark:bg-slate-800 p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-700">
+                    <div class="flex gap-1">
+                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+            <form @submit.prevent="sendToAi" class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-2xl p-1">
+                <input x-model="userInput" type="text" placeholder="Pergunte algo..." class="flex-1 bg-transparent border-none px-4 py-3 text-sm focus:ring-0 focus:outline-none dark:text-white">
+                <button type="submit" :disabled="!userInput.trim() || isAiLoading" class="p-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                    <x-lucide-send class="w-5 h-5" />
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MOBILE NAVIGATION (Fixed Bottom) -->
+    <nav class="lg:hidden fixed bottom-0 left-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe">
+        <div class="flex items-center justify-between h-16 px-4">
+            <a href="/" class="flex flex-col items-center justify-center flex-1 text-amber-600 dark:text-amber-500">
+                <x-lucide-home class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Início</span>
+            </a>
+            <button @click="showAiChat = true" class="flex flex-col items-center justify-center flex-1 text-slate-400">
+                <x-lucide-siren class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Lampião</span>
+            </button>
+            <a href="https://iprviamao.com.br/lampada/" target="_blank" class="flex flex-col items-center justify-center flex-1 text-slate-400">
+                <x-lucide-info class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Sobre</span>
+            </a>
+            <a href="/admin" class="flex flex-col items-center justify-center flex-1 text-slate-400">
+                <x-lucide-layout-dashboard class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Admin</span>
+            </a>
+        </div>
+    </nav>
+
+<!-- </div> -->
 
     <!-- MODALS (Mobile Context) -->
 
@@ -435,31 +395,6 @@
                             </button>
                         </div>
 
-                        <!-- Tom (Pitch) -->
-                        <div class="mb-4">
-                            <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Tom de voz</p>
-                            <div class="flex gap-1.5">
-                                <button @click="ttsPitch = 0.5; updateTtsRealtime()"
-                                    :class="ttsPitch === 0.5 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
-                                    <span>🔈</span>
-                                    <span>Grave</span>
-                                </button>
-                                <button @click="ttsPitch = 1.0; updateTtsRealtime()"
-                                    :class="ttsPitch === 1.0 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
-                                    <span>🔉</span>
-                                    <span>Normal</span>
-                                </button>
-                                <button @click="ttsPitch = 1.7; updateTtsRealtime()"
-                                    :class="ttsPitch === 1.7 ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                                    class="flex-1 flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg text-xs font-bold transition-all">
-                                    <span>🔊</span>
-                                    <span>Agudo</span>
-                                </button>
-                            </div>
-                        </div>
-
                         <!-- Velocidade -->
                         <div class="mb-4">
                             <p class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Velocidade</p>
@@ -556,8 +491,4 @@
             </div>
         </div>
     </div>
-
-
-</body>
-
-</html>
+</div>

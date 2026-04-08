@@ -17,7 +17,7 @@ export default () => ({
     ttsVoices: [],
     ttsVoiceIndex: 0,
     ttsRate: 0.9,
-    ttsPitch: 0.5,
+    ttsPitch: 1.1,
     ttsAnnounceVerses: false,
     isMusicPlaying: false,
     ttsAutoMusic: true,
@@ -433,9 +433,7 @@ export default () => ({
         const addTestament = (testament) => {
             if (!testament || !testament.success) { return; }
             testament.chapters.forEach(chapter => {
-                if (this.ttsAnnounceVerses) {
-                    parts.push(`${testament.book_name} capítulo ${chapter.number}.`);
-                }
+                parts.push(`${testament.book_name} capítulo ${chapter.number}.`);
                 chapter.verses.forEach(verse => {
                     if (this.ttsAnnounceVerses) {
                         parts.push(`Versículo ${verse.number}. ${verse.text}`);

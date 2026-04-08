@@ -8,7 +8,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListDevotionals extends ListRecords
 {
-    protected static ?string $title = 'Devocionais';
+    protected static ?string $title = 'Leituras Diárias';
 
     protected ?string $subheading = 'Lista dos resumos já cadastrados';
 
