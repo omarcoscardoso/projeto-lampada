@@ -69,7 +69,7 @@ export const ttsHandler = () => ({
     },
 
     // Dividir o texto em chunks por frase para contornar bug do Chrome com textos longos
-    _splitIntoChunks(text, maxLength = 1000) {
+    _splitIntoChunks(text, maxLength = 300) {
         const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
         const chunks = [];
         let current = '';
@@ -120,31 +120,25 @@ export const ttsHandler = () => ({
         this._currentChunkIndex = 0;
         console.log('[TTS] Total de chunks:', this._ttsChunks.length, '| Chars totais:', text.length);
 
-        const startSpeaking = () => {
-            window.speechSynthesis.cancel();
-            this.isSpeaking = true;
-            this.isPaused = false;
+       window.speechSynthesis.cancel(); // Cancela qualquer fala anterior
+        this.isSpeaking = true;
+        this.isPaused = false;
 
-            if (this.ttsAutoMusic) {
-                this.startAmbientMusic();
-            }
-
-            if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
-            this._ttsKeepAlive = setInterval(() => {
-                if (window.speechSynthesis.speaking && !this.isPaused) {
-                    window.speechSynthesis.pause();
-                    window.speechSynthesis.resume();
-                }
-            }, 10000);
-
-            this.speakChunk(0);
-        };
-
-        if (this.ttsVoices.length === 0) {
-            window.speechSynthesis.addEventListener('voiceschanged', startSpeaking, { once: true });
-        } else {
-            startSpeaking();
+        if (this.ttsAutoMusic) {
+            this.startAmbientMusic();
         }
+
+        // Limpa qualquer keep-alive existente e configura um novo
+        if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
+        this._ttsKeepAlive = setInterval(() => {
+            if (window.speechSynthesis.speaking && !this.isPaused) {
+                window.speechSynthesis.pause();
+                window.speechSynthesis.resume();
+            }
+        }, 10000); // Intervalo de keep-alive para navegadores móveis
+
+        this.speakChunk(0); // Tenta iniciar a fala do primeiro chunk imediatamente
+          
     },
 
     speakChunk(index) {
