@@ -61,7 +61,7 @@ export const ttsHandler = () => ({
     },
 
     // Dividir o texto em chunks por frase para contornar bug do Chrome com textos longos
-    _splitIntoChunks(text, maxLength = 300) {
+    _splitIntoChunks(text, maxLength = 400) {
         const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
         const chunks = [];
         let current = '';
@@ -132,7 +132,8 @@ export const ttsHandler = () => ({
                 window.speechSynthesis.pause();
                 window.speechSynthesis.resume();
             }
-        }, 5000);
+            console.log('[TTS] Keep-alive: CHEGUEI AQUI!!!!');
+        }, 4000);
 
         this.speakChunk(0);
     },
@@ -192,6 +193,5 @@ export const ttsHandler = () => ({
         this.isPaused = false;
         this._utterance = null;
     }, 
-
 
 });
