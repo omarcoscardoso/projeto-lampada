@@ -10,6 +10,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Navigation\NavigationItem;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -56,6 +57,12 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->navigationItems([
+                NavigationItem::make('Acessar App')
+                    ->url(fn (): string => route('home'))
+                    ->icon('lucide-book-open-text')
+                    ->sort(2),
+            ])
             ->maxContentWidth(1024)
             ->favicon(asset('favicon.ico'))
             ->brandLogo(asset('logo_lampada_154x59.png'))
