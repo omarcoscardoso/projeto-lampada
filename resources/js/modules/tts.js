@@ -30,18 +30,10 @@ export const ttsHandler = () => ({
     },
 
     speak(text) {
-        window.speechSynthesis.cancel();
-        this._ttsChunks = text.match(/[^.!?]+[.!?]+/g) ?? [text];
-        this.isSpeaking = true;
-        this._playChunk(0);
-    },
-
-    _playChunk(index) {
-        if (index >= this._ttsChunks.length) { this.stopTts(); return; }
-        const utter = new SpeechSynthesisUtterance(this._ttsChunks[index]);
-        utter.voice = this.ttsVoices[this.ttsVoiceIndex];
-        utter.onend = () => this._playChunk(index + 1);
-        window.speechSynthesis.speak(utter);
+        if (!text) return;
+        this._ttsChunks = this._splitIntoChunks(text);
+        this._currentChunkIndex = 0;
+        this._startSpeechSequence();
     },
 
     extractBibleText() {
@@ -118,27 +110,31 @@ export const ttsHandler = () => ({
 
         this._ttsChunks = this._splitIntoChunks(text);
         this._currentChunkIndex = 0;
-        console.log('[TTS] Total de chunks:', this._ttsChunks.length, '| Chars totais:', text.length);
+        this._startSpeechSequence();
+    },
 
-       window.speechSynthesis.cancel(); // Cancela qualquer fala anterior
+    _startSpeechSequence() {
+        // Reset fundamental para Mobile: cancela e força o 'resume' para destravar a engine
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+
         this.isSpeaking = true;
         this.isPaused = false;
 
-        if (this.ttsAutoMusic) {
-            this.startAmbientMusic();
-        }
+        if (this.ttsAutoMusic) { this.startAmbientMusic(); }
 
-        // Limpa qualquer keep-alive existente e configura um novo
         if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
+        
+        // Intervalo de keep-alive: essencial para mobile. 
+        // Reduzido para 5s para garantir que o processo não seja morto pelo SO.
         this._ttsKeepAlive = setInterval(() => {
             if (window.speechSynthesis.speaking && !this.isPaused) {
                 window.speechSynthesis.pause();
                 window.speechSynthesis.resume();
             }
-        }, 10000); // Intervalo de keep-alive para navegadores móveis
+        }, 5000);
 
-        this.speakChunk(0); // Tenta iniciar a fala do primeiro chunk imediatamente
-          
+        this.speakChunk(0);
     },
 
     speakChunk(index) {
