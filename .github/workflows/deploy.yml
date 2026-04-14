@@ -6,12 +6,11 @@ on:
       - main
 
 env:
-  PROJECT_ID: iprviamao-169920
-  SERVICE_NAME: lampada-iprviamao-com-br
-  REGION: us-central1
-  AR_REPO_NAME: cloud-run-source-deploy
-  CLOUD_SQL_INSTANCE: iprviamao-169920:us-central1:app-e-ticket
-  APP_ENV: production
+  PROJECT_ID: ${{ vars.PROJECT_ID }}
+  SERVICE_NAME: ${{ vars.SERVICE_NAME }}
+  REGION: ${{ vars.REGION }}
+  AR_REPO_NAME: ${{ vars.AR_REPO_NAME }}
+  APP_ENV: ${{ vars.APP_ENV }}
 
 jobs:
   deploy:
@@ -53,7 +52,7 @@ jobs:
             --cpu=1 
             --memory=512Mi
             --concurrency=80
-            --add-cloudsql-instances ${{ env.CLOUD_SQL_INSTANCE }}
+            --add-cloudsql-instances ${{ vars.CLOUD_SQL_INSTANCE }}
             --allow-unauthenticated
           env_vars: |
             APP_NAME=${{ env.SERVICE_NAME }},
@@ -62,13 +61,15 @@ jobs:
             APP_DEBUG=true,
             APP_LOCALE=pt_BR,
             DB_CONNECTION=mysql,
-            DB_SOCKET=/cloudsql/${{ env.CLOUD_SQL_INSTANCE }},
+            DB_SOCKET=/cloudsql/${{ vars.CLOUD_SQL_INSTANCE }},
             DB_DATABASE=${{ secrets.CLOUD_SQL_DATABASE }},
             DB_USERNAME=${{ secrets.CLOUD_SQL_USER}},
             DB_PASSWORD=${{ secrets.CLOUD_SQL_PASSWORD}},
             APP_VERSION=${{ github.sha }},
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
             ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }}
-
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URL=${APP_URL}/auth/google/callback
       - name: Exibir URL do Cloud Run
         run: echo "'Service URL:' ${{ steps.deploy.outputs.url }}"
