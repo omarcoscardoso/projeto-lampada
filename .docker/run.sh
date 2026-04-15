@@ -7,6 +7,7 @@
 
 echo "Running migrations..."
 php artisan migrate --force --no-interaction
+php artisan db:seed --force --no-interaction
 php artisan shield:generate --all --no-interaction
 php artisan permission:cache-reset
 
