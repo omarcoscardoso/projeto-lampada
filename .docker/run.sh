@@ -7,6 +7,7 @@
 
 echo "Running migrations..."
 php artisan migrate --force --no-interaction
+php artisan shield:generate --all --no-interaction
 
 echo "Starting supervisor..."
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

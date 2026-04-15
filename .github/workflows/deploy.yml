@@ -7,10 +7,7 @@ on:
 
 env:
   PROJECT_ID: ${{ vars.PROJECT_ID }}
-  SERVICE_NAME: ${{ vars.SERVICE_NAME }}
-  REGION: ${{ vars.REGION }}
   AR_REPO_NAME: ${{ vars.AR_REPO_NAME }}
-  APP_ENV: ${{ vars.APP_ENV }}
 
 jobs:
   deploy:
@@ -36,18 +33,18 @@ jobs:
         run: gcloud auth configure-docker ${REGION}-docker.pkg.dev
 
       - name: Build Docker Image
-        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+        run: docker build -t ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }} .
             
       - name: Push Docker Image
-        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}  
+        run: docker push ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }}  
 
       - name: Deploy to Cloud Run
         id: deploy
         uses: 'google-github-actions/deploy-cloudrun@v2'
         with:
-          service: ${{ env.SERVICE_NAME }}
-          region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          service: ${{ vars.SERVICE_NAME }}
+          region: ${{ vars.REGION }}
+          image: ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }}
           flags: | 
             --cpu=1 
             --memory=512Mi
@@ -55,21 +52,21 @@ jobs:
             --add-cloudsql-instances ${{ vars.CLOUD_SQL_INSTANCE }}
             --allow-unauthenticated
           env_vars: |
-            APP_NAME=${{ env.SERVICE_NAME }},
-            APP_ENV=${{ env.APP_ENV }},
-            APP_URL=https://lampada.iprviamao.com.br,
+            APP_NAME=${{ vars.SERVICE_NAME }},
+            APP_ENV=${{ vars.APP_ENV }},
+            APP_URL=${{ vars.APP_URL }},
             APP_DEBUG=true,
             APP_LOCALE=pt_BR,
             DB_CONNECTION=mysql,
             DB_SOCKET=/cloudsql/${{ vars.CLOUD_SQL_INSTANCE }},
-            DB_DATABASE=${{ secrets.CLOUD_SQL_DATABASE }},
-            DB_USERNAME=${{ secrets.CLOUD_SQL_USER}},
-            DB_PASSWORD=${{ secrets.CLOUD_SQL_PASSWORD}},
+            DB_DATABASE=${{ vars.DB_DATABASE }},
+            DB_USERNAME=${{ vars.DB_USERNAME }},
+            DB_PASSWORD=${{ secrets.DB_PASSWORD}},
             APP_VERSION=${{ github.sha }},
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            GOOGLE_REDIRECT_URL=${APP_URL}/auth/google/callback
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},
+            ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }},
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},
+            GOOGLE_REDIRECT_URL=${{ vars.GOOGLE_REDIRECT_URL }}
       - name: Exibir URL do Cloud Run
         run: echo "'Service URL:' ${{ steps.deploy.outputs.url }}"
