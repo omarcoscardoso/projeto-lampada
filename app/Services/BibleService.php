@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -117,35 +118,39 @@ class BibleService
      */
     public function getVersesByReference(string $reference): array
     {
-        $parsed = $this->parseReference($reference);
+        $cacheKey = 'bible_ref_'.md5(Str::lower(trim($reference)));
 
-        if (! $parsed) {
-            return ['success' => false, 'message' => "Referência inválida: {$reference}", 'chapters' => []];
-        }
+        return Cache::remember($cacheKey, now()->addDays(30), function () use ($reference) {
+            $parsed = $this->parseReference($reference);
 
-        $allResults = [];
-        $bookName = '';
-        $finalVersion = '';
-
-        foreach ($parsed['chapters'] as $chapter) {
-            $chapterData = $this->fetchChapterWithRetry($parsed['book'], $chapter, $parsed);
-            if ($chapterData['success']) {
-                $allResults[] = $chapterData;
-                $bookName = $chapterData['book_name'];
-                $finalVersion = $chapterData['version'];
+            if (! $parsed) {
+                return ['success' => false, 'message' => "Referência inválida: {$reference}", 'chapters' => []];
             }
-        }
 
-        if (empty($allResults)) {
-            return ['success' => false, 'message' => "Não foi possível carregar os textos para {$reference}", 'chapters' => []];
-        }
+            $allResults = [];
+            $bookName = '';
+            $finalVersion = '';
 
-        return [
-            'success' => true,
-            'book_name' => $bookName,
-            'version' => $finalVersion,
-            'chapters' => $allResults,
-        ];
+            foreach ($parsed['chapters'] as $chapter) {
+                $chapterData = $this->fetchChapterWithRetry($parsed['book'], $chapter, $parsed);
+                if ($chapterData['success']) {
+                    $allResults[] = $chapterData;
+                    $bookName = $chapterData['book_name'];
+                    $finalVersion = $chapterData['version'];
+                }
+            }
+
+            if (empty($allResults)) {
+                return ['success' => false, 'message' => "Não foi possível carregar os textos para {$reference}", 'chapters' => []];
+            }
+
+            return [
+                'success' => true,
+                'book_name' => $bookName,
+                'version' => $finalVersion,
+                'chapters' => $allResults,
+            ];
+        });
     }
 
     private function fetchChapterWithRetry(string $book, int $chapter, array $parsed): array
