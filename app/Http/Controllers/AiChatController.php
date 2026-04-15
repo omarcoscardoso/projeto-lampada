@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Ai\LampiaoAgent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Laravel\Ai\AnonymousAgent;
-use Laravel\Ai\Responses\AgentResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class AiChatController extends Controller
 {
@@ -17,59 +18,41 @@ class AiChatController extends Controller
         $request->validate([
             'message' => 'required|string|max:1000',
             'devotional_context' => 'nullable|string',
-            'history' => 'nullable|array',
+            'conversation_id' => 'nullable|string',
         ]);
 
         $message = $request->input('message');
         $context = $request->input('devotional_context');
-        $history = $request->input('history', []);
+        $conversationId = $request->input('conversation_id');
 
-        // Mapeia o histórico para o formato esperado pelo Agente (user/assistant)
-        $mappedHistory = array_map(function ($msg) {
-            return [
-                'role' => $msg['role'] === 'ai' ? 'assistant' : 'user',
-                'content' => $msg['content'],
-            ];
-        }, $history);
-
-        // Limita o histórico das últimas 10 mensagens para não exceder o limite de contexto
-        if (count($mappedHistory) > 10) {
-            $mappedHistory = array_slice($mappedHistory, -10);
-        }
-
-        $systemPrompt = "Você é o 'Assistente Lampião', um tutor bíblico empático e sábio.\n"
-            ."Seu objetivo é ajudar o usuário a aprofundar sua leitura devocional.\n"
-            ."Responda sempre com base em princípios bíblicos cristão evangélico.\n"
-            ."Use uma linguagem acolhedora e encorajadora.\n\n"
-            ."Seja sempre curto em suas respostas para facilitar a leitura no celular.\n\n"
-            ."Não faça perguntas ao usuário, apenas responda.\n\n"
-            ."REGRAS DE FORMATAÇÃO:\n"
-            ."- Use quebras de linha frequentes para não criar blocos de texto muito grandes.\n"
-            ."- Use listas (bullets) para enumerar pontos de forma didática.\n"
-            ."- Use negrito (Markdown: **texto**) para destacar termos importantes.\n"
-            ."- Pode usar emojis para ilustrar seus pontos.\n"
-            .'- O texto deve ser visualmente limpo e fácil de ler no celular.';
-
-        if ($context) {
-            $systemPrompt .= "\n\nO usuário está lendo o seguinte devocional agora. Use-o como contexto para responder:\n".$context;
-        }
+        // Gera chave de cache baseada na mensagem, contexto e ID da conversa (se houver)
+        $cacheKey = 'ai_resp_'.md5($message.$context.$conversationId);
 
         try {
-            // Cria um Agente Anônimo com o prompt de sistema e o histórico de mensagens prévias
-            $agent = new AnonymousAgent(
-                instructions: $systemPrompt,
-                messages: $mappedHistory,
-                tools: []
-            );
+            $agent = new LampiaoAgent;
 
-            // Usa a trait Promptable para enviar a pergunta para o provedor padrao (Gemini)
-            $response = $agent->prompt($message);
+            if ($conversationId) {
+                // No laravel/ai v0, continue() requer o ID e o participante (user)
+                $agent->continue($conversationId, Auth::user() ?? (object) ['id' => 'guest']);
+            } elseif (Auth::check()) {
+                $agent->forUser(Auth::user());
+            }
 
-            /** @var AgentResponse|string $response */
-            $replyText = (string) $response;
+            $promptMessage = $message;
+            if ($context) {
+                $promptMessage = "CONTEXTO DO DEVOCIONAL:\n{$context}\n\nPERGUNTA: {$message}";
+            }
+
+            // Cache de 1 hora para evitar chamadas duplicadas/idênticas
+            $replyText = Cache::remember($cacheKey, now()->addHour(), function () use ($agent, $promptMessage) {
+                $response = $agent->prompt($promptMessage);
+
+                return (string) $response;
+            });
 
             return response()->json([
                 'response' => $replyText,
+                'conversation_id' => $agent->currentConversation(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
