@@ -55,6 +55,8 @@ class DevotionalsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('month', 'asc')
+            ->modifyQueryUsing(fn ($query) => $query->orderBy('month')->orderBy('day'));
     }
 }
