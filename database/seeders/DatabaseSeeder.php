@@ -17,9 +17,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(ShieldSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $user = User::updateOrCreate(
+            ['email' => 'cardoso.oliveira@gmail.com'],
+            [
+                'name' => 'Marcos Cardoso',
+                'password' => bcrypt('password'), // Altere após o primeiro login ou use uma env
+            ]
+        );
+
+        $user->assignRole('super_admin');
     }
 }
