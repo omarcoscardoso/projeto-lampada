@@ -94,7 +94,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->navigationItems([
                 NavigationItem::make('Acessar App')
-                    ->url(fn (): string => route('home'))
+                    ->url(fn (): string => route('app'))
                     ->icon('lucide-book-open-text')
                     ->sort(2),
             ])

@@ -2,11 +2,11 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Devotional;
 use Illuminate\Support\Facades\Date;
+use Livewire\Component;
 
-class Home extends Component
+class App extends Component
 {
     public $devotional;
 
@@ -14,12 +14,13 @@ class Home extends Component
     {
         $now = Date::now();
         $this->devotional = Devotional::query()
-                            ->where('month', $now->month)
-                            ->where('day', $now->day)
-                            ->first(); 
+            ->where('month', $now->month)
+            ->where('day', $now->day)
+            ->first();
     }
+
     public function render()
     {
-        return view('livewire.home');
+        return view('livewire.app');
     }
 }

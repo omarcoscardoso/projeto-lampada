@@ -55,6 +55,6 @@ class SocialiteController extends Controller
 
         Auth::login($user);
 
-        return redirect()->intended('/admin');
+        return redirect()->intended(route('app'));
     }
 }
