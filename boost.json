@@ -2,6 +2,7 @@
     "agents": [
         "gemini"
     ],
+    "cloud": false,
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
@@ -11,6 +12,8 @@
     ],
     "sail": true,
     "skills": [
+        "ai-sdk-development",
+        "laravel-best-practices",
         "socialite-development",
         "livewire-development",
         "pest-testing",

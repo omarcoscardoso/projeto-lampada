@@ -2,38 +2,13 @@ export const ttsHandler = () => ({
     isSpeaking: false,
     isPaused: false,
     showTtsSettings: false,
-    ttsVoices: [],
-    ttsVoiceIndex: 0,
-    ttsRate: 1,
-    ttsPitch: 1.1,
     ttsAnnounceVerses: false,
-    ttsAutoMusic: true,
-    _ttsKeepAlive: null,
-    _utterance: null,
-    _ttsChunks: [],
-    _currentChunkIndex: 0,
+    ttsAutoMusic: false,
+    _audioElement: null,
+    isTtsLoading: false,
 
     initTts() {
-        const loadVoices = () => {
-            const all = window.speechSynthesis.getVoices();
-            this.ttsVoices = all.filter(v => v.lang.startsWith('pt'));
-            if (this.ttsVoices.length === 0) {
-                // Fallback: mostrar todas as vozes se não houver pt-BR
-                this.ttsVoices = all;
-            }
-            this.ttsVoiceIndex = 0;
-        };
-
-        loadVoices();
-        window.speechSynthesis.addEventListener('voiceschanged', loadVoices);      
-
-    },
-
-    speak(text) {
-        if (!text) return;
-        this._ttsChunks = this._splitIntoChunks(text);
-        this._currentChunkIndex = 0;
-        this._startSpeechSequence();
+        // Vozes não precisam mais ser carregadas do navegador
     },
 
     extractBibleText() {
@@ -60,47 +35,22 @@ export const ttsHandler = () => ({
         return parts.join(' ');
     },
 
-    // Dividir o texto em chunks por frase para contornar bug do Chrome com textos longos
-    _splitIntoChunks(text, maxLength = 500) {
-        const sentences = text.match(/[^.!?]+[.!?]+/g) ?? [text];
-        const chunks = [];
-        let current = '';
-
-        sentences.forEach(sentence => {
-            if ((current + sentence).length > maxLength && current.length > 0) {
-                chunks.push(current.trim());
-                current = sentence;
-            } else {
-                current += sentence;
-            }
-        });
-
-        if (current.trim().length > 0) {
-            chunks.push(current.trim());
-        }
-
-        return chunks;
-    },
-
-    toggleTts() {
-        if (!('speechSynthesis' in window)) {
-            alert('Seu navegador não suporta leitura em voz alta.');
-            return;
-        }
-
+    async toggleTts() {
         if (this.isSpeaking && !this.isPaused) {
-            window.speechSynthesis.pause();
+            this._audioElement?.pause();
             this.stopAmbientMusic();
             this.isPaused = true;
             return;
         }
 
         if (this.isSpeaking && this.isPaused) {
-            window.speechSynthesis.resume();
+            this._audioElement?.play();
             this.startAmbientMusic();
             this.isPaused = false;
             return;
         }
+
+        if (this.isTtsLoading) return;
 
         const text = this.extractBibleText();
         if (!text) {
@@ -108,89 +58,104 @@ export const ttsHandler = () => ({
             return;
         }
 
-        this._ttsChunks = this._splitIntoChunks(text);
-        this._currentChunkIndex = 0;
-        this._startSpeechSequence();
+        this.isTtsLoading = true;
+
+        try {
+            const dateStr = this.currentDate || new Date().toISOString().split('T')[0];
+            const [, month, day] = dateStr.split('-');
+            const formattedDate = `${month}/${day}`;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            /**
+             * Google TTS suporta até 5000 caracteres. 
+             * Para textos muito grandes, o ideal seria dividir em partes (chunks),
+             * mas por enquanto vamos garantir que o truncamento não quebre a requisição.
+             */
+            const MAX_CHARS = 4800; // Google suporta até 5000 bytes
+            const truncatedText = text.length > MAX_CHARS ? text.substring(0, MAX_CHARS) : text;
+
+            if (text.length > MAX_CHARS) {
+                console.warn('[TTS] Texto muito grande, truncado para os primeiros 4500 caracteres.');
+            }
+
+            const res = await fetch('/api/tts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    date: formattedDate,
+                    text: truncatedText
+                })
+            });
+
+            const data = await res.json();
+            if (data.success && data.url) {
+                console.log('[TTS] Audio URL recebida:', data.url);
+                this.playAudioUrl(data.url);
+            } else {
+                console.error('[TTS] Erro da API:', data.message);
+                alert('Não foi possível carregar o áudio.');
+            }
+        } catch (e) {
+            console.error('[TTS] Erro ao fazer request para /api/tts', e);
+            alert('Erro de conexão ao carregar áudio.');
+        } finally {
+            this.isTtsLoading = false;
+        }
     },
 
-    _startSpeechSequence() {
-        // Reset fundamental para Mobile: cancela e força o 'resume' para destravar a engine
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-
-        this.isSpeaking = true;
-        this.isPaused = false;
-
-        if (this.ttsAutoMusic) { this.startAmbientMusic(); }
-
-        if (this._ttsKeepAlive) { clearInterval(this._ttsKeepAlive); }
-        
-        // Intervalo de keep-alive: essencial para mobile. 
-        // Reduzido para 5s para garantir que o processo não seja morto pelo SO.
-        this._ttsKeepAlive = setInterval(() => {
-            if (window.speechSynthesis.speaking && !this.isPaused) {
-                window.speechSynthesis.pause();
-                window.speechSynthesis.resume();
-            }
-        }, 5000);
-
-        this.speakChunk(0);
-    },
-
-    speakChunk(index) {
-        if (index >= this._ttsChunks.length || !this.isSpeaking) {
-            if (index >= this._ttsChunks.length) {
-                this.stopTts();
-            }
-            return;
+    playAudioUrl(url) {
+        if (this._audioElement) {
+            this._audioElement.pause();
+            this._audioElement.src = '';
+            this._audioElement.load();
         }
 
-        this._currentChunkIndex = index;
-        this._utterance = new SpeechSynthesisUtterance(this._ttsChunks[index]);
-        this._utterance.lang = 'pt-BR';
-        this._utterance.rate = this.ttsRate;
-        this._utterance.pitch = this.ttsPitch;
+        const timestampedUrl = `${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+        this._audioElement = new Audio();
 
-        const selectedVoice = this.ttsVoices[this.ttsVoiceIndex] ?? null;
-        if (selectedVoice) { this._utterance.voice = selectedVoice; }
+        // Evita problemas de CORS se o áudio estiver em outro domínio (ex: GCS)
+        this._audioElement.crossOrigin = "anonymous";
 
-        this._utterance.onend = () => {
-            if (this.isSpeaking && !this.isPaused) {
-                this.speakChunk(index + 1);
-            }
-        };
-
-        this._utterance.onerror = (e) => {
-            if (e.error === 'interrupted' || e.error === 'canceled') { return; }
-            console.error('[TTS] Erro no chunk', index, ':', e.error);
+        this._audioElement.onended = () => {
             this.stopTts();
         };
 
-        window.speechSynthesis.speak(this._utterance);
+        this._audioElement.onerror = (e) => {
+            console.error('[TTS] Erro no carregamento do áudio. Verifique se a URL é válida e acessível:', url, e);
+            this.stopTts();
+        };
+
+        this._audioElement.src = timestampedUrl;
+        this._audioElement.load();
+
+        this._audioElement.play().then(() => {
+            this.isSpeaking = true;
+            this.isPaused = false;
+            if (this.ttsAutoMusic) { this.startAmbientMusic(); }
+        }).catch(err => {
+            console.error('[TTS] Play failed', err);
+            this.stopTts();
+            alert('Erro ao reproduzir o áudio (política do navegador).');
+        });
     },
 
+    // Fallback: se usar o toggleAutoMusic do painel, afeta apenas o ambientMusic
     updateTtsRealtime() {
-        if (!this.isSpeaking) return;
-
-        // Reiniciar o chunk atual com as novas configurações (pitch, rate, voice)
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            this.speakChunk(this._currentChunkIndex);
-        }
+        // Sem uso, já que a voz não é mais sintetizada no navegador em tempo real
     },
-    
+
     stopTts() {
-        if (this._ttsKeepAlive) {
-            clearInterval(this._ttsKeepAlive);
-            this._ttsKeepAlive = null;
-        }
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
+        if (this._audioElement) {
+            this._audioElement.pause();
+            this._audioElement.currentTime = 0;
         }
         this.stopAmbientMusic();
         this.isSpeaking = false;
         this.isPaused = false;
-        this._utterance = null;
-    }, 
-
+    },
 });

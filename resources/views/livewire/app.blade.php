@@ -207,20 +207,24 @@
                     <div class="relative">
                         <div class="flex items-center gap-1">
                             <button @click="toggleTts"
-                                :class="isSpeaking && !isPaused ? 'bg-violet-100 text-violet-600 border-violet-200 dark:bg-violet-900/30 dark:border-violet-700' : (isSpeaking && isPaused ? 'bg-sky-100 text-sky-600 border-sky-200 dark:bg-sky-900/30 dark:border-sky-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700')"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95"
+                                :class="isTtsLoading ? 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700' : (isSpeaking && !isPaused ? 'bg-violet-100 text-violet-600 border-violet-200 dark:bg-violet-900/30 dark:border-violet-700' : (isSpeaking && isPaused ? 'bg-sky-100 text-sky-600 border-sky-200 dark:bg-sky-900/30 dark:border-sky-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'))"
+                                class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                                :disabled="isTtsLoading"
                                 :title="isSpeaking && !isPaused ? 'Pausar leitura' : (isSpeaking && isPaused ? 'Retomar leitura' : 'Ler em voz alta')">
-                                <template x-if="isSpeaking && !isPaused">
+                                <template x-if="isTtsLoading">
+                                    <x-lucide-loader class="w-5 h-5 animate-spin" />
+                                </template>
+                                <template x-if="!isTtsLoading && (isSpeaking && !isPaused)">
                                     <x-lucide-mic class="w-5 h-5 animate-pulse" />
                                 </template>
-                                <template x-if="isSpeaking && isPaused">
+                                <template x-if="!isTtsLoading && (isSpeaking && isPaused)">
                                     <x-lucide-play class="w-5 h-5" />
                                 </template>
-                                <template x-if="!isSpeaking">
+                                <template x-if="!isTtsLoading && !isSpeaking">
                                     <x-lucide-volume-2 class="w-5 h-5" />
                                 </template>
                                 <span class="text-xs font-bold hidden sm:inline"
-                                    x-text="isSpeaking && !isPaused ? 'Pausar' : (isSpeaking && isPaused ? 'Retomar' : 'Ouvir')"></span>
+                                    x-text="isTtsLoading ? 'Gerando...' : (isSpeaking && !isPaused ? 'Pausar' : (isSpeaking && isPaused ? 'Retomar' : 'Ouvir'))"></span>
                             </button>
 
                             <!-- Engrenagem de configurações TTS -->
@@ -279,7 +283,7 @@
                             </div>
 
                             <!-- Velocidade -->
-                            <div class="mb-4">
+                            <!-- <div class="mb-4">
                                 <p
                                     class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                                     Velocidade</p>
@@ -292,7 +296,7 @@
                                         </button>
                                     </template>
                                 </div>
-                            </div>
+                            </div> -->
 
                         </div>
                     </div>

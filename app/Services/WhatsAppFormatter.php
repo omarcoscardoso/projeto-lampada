@@ -42,7 +42,7 @@ class WhatsAppFormatter
 
         // 7. Cleanup
         // Step A: Replace bullet followed immediately by newline (common with nested tags like <li><p>)
-        $text = preg_replace('/(-)\s*[\r\n]+/', "$1 ", $text);
+        $text = preg_replace('/(-)\s*[\r\n]+/', '$1 ', $text);
 
         // Step B: Clean up whitespace on each line but preserve bullets
         $lines = explode("\n", $text);
@@ -50,8 +50,9 @@ class WhatsAppFormatter
             $trimmed = trim($line);
             if (str_starts_with($trimmed, '-')) {
                 // Ensure there is only one space after hyphen
-                return '- ' . trim(substr($trimmed, 1));
+                return '- '.trim(substr($trimmed, 1));
             }
+
             return $trimmed;
         }, $lines);
 
