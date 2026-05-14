@@ -5,6 +5,8 @@ export const ttsHandler = () => ({
     ttsAnnounceVerses: false,
     ttsAutoMusic: false,
     _audioElement: null,
+    _audioUrls: [],
+    _currentAudioIndex: 0,
     isTtsLoading: false,
 
     initTts() {
@@ -67,18 +69,6 @@ export const ttsHandler = () => ({
 
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-            /**
-             * Google TTS suporta até 5000 caracteres. 
-             * Para textos muito grandes, o ideal seria dividir em partes (chunks),
-             * mas por enquanto vamos garantir que o truncamento não quebre a requisição.
-             */
-            const MAX_CHARS = 4800; // Google suporta até 5000 bytes
-            const truncatedText = text.length > MAX_CHARS ? text.substring(0, MAX_CHARS) : text;
-
-            if (text.length > MAX_CHARS) {
-                console.warn('[TTS] Texto muito grande, truncado para os primeiros 4500 caracteres.');
-            }
-
             const res = await fetch('/api/tts', {
                 method: 'POST',
                 headers: {
@@ -88,14 +78,14 @@ export const ttsHandler = () => ({
                 },
                 body: JSON.stringify({
                     date: formattedDate,
-                    text: truncatedText
+                    text: text // Envia o texto completo
                 })
             });
 
             const data = await res.json();
-            if (data.success && data.url) {
-                console.log('[TTS] Audio URL recebida:', data.url);
-                this.playAudioUrl(data.url);
+            if (data.success && data.urls && data.urls.length > 0) { // Espera um array de URLs
+                console.log('[TTS] Audio URLs recebidas:', data.urls);
+                this.playAudioPlaylist(data.urls); // Chama a nova função de playlist
             } else {
                 console.error('[TTS] Erro da API:', data.message);
                 alert('Não foi possível carregar o áudio.');
@@ -108,45 +98,61 @@ export const ttsHandler = () => ({
         }
     },
 
-    playAudioUrl(url) {
-        if (this._audioElement) {
-            this._audioElement.pause();
-            this._audioElement.src = '';
-            this._audioElement.load();
+    // Nova função para reproduzir uma lista de URLs de áudio sequencialmente
+    playAudioPlaylist(urls) {
+        this.stopTts(); // Para qualquer reprodução atual e reseta o estado
+
+        if (!urls || urls.length === 0) {
+            console.warn('[TTS] Nenhuma URL de áudio para reproduzir.');
+            return;
         }
 
-        const timestampedUrl = `${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
-        this._audioElement = new Audio();
+        this._audioUrls = urls;
+        this._currentAudioIndex = 0;
+        this.isSpeaking = true;
+        this.isPaused = false;
 
-        // Evita problemas de CORS se o áudio estiver em outro domínio (ex: GCS)
-        this._audioElement.crossOrigin = "anonymous";
+        this._playCurrentAudioChunk();
+    },
+
+    _playCurrentAudioChunk() {
+        if (this._currentAudioIndex >= this._audioUrls.length) {
+            this.stopTts(); // Fim da playlist
+            return;
+        }
+
+        const url = this._audioUrls[this._currentAudioIndex];
+        const timestampedUrl = `${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
+
+        if (this._audioElement) {
+            this._audioElement.pause();
+            this._audioElement = null;
+        }
+
+        this._audioElement = new Audio(timestampedUrl);
 
         this._audioElement.onended = () => {
-            this.stopTts();
+            console.log(`[TTS] Chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length} finalizado.`);
+            this._currentAudioIndex++;
+            this._playCurrentAudioChunk(); // Reproduz o próximo chunk
         };
 
         this._audioElement.onerror = (e) => {
-            console.error('[TTS] Erro no carregamento do áudio. Verifique se a URL é válida e acessível:', url, e);
-            this.stopTts();
+            console.error(`[TTS] Erro no carregamento do chunk de áudio ${this._currentAudioIndex + 1}:`, url, e);
+            this.stopTts(); // Para a playlist inteira em caso de erro
+            alert('Erro ao carregar um trecho do áudio.');
         };
 
-        this._audioElement.src = timestampedUrl;
-        this._audioElement.load();
-
         this._audioElement.play().then(() => {
-            this.isSpeaking = true;
-            this.isPaused = false;
-            if (this.ttsAutoMusic) { this.startAmbientMusic(); }
+            console.log(`[TTS] Iniciando chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length}.`);
+            if (this.ttsAutoMusic && this._currentAudioIndex === 0) { // Inicia a música ambiente apenas para o primeiro chunk
+                this.startAmbientMusic();
+            }
         }).catch(err => {
-            console.error('[TTS] Play failed', err);
+            console.error('[TTS] Falha na reprodução do chunk', this._currentAudioIndex + 1, err);
             this.stopTts();
             alert('Erro ao reproduzir o áudio (política do navegador).');
         });
-    },
-
-    // Fallback: se usar o toggleAutoMusic do painel, afeta apenas o ambientMusic
-    updateTtsRealtime() {
-        // Sem uso, já que a voz não é mais sintetizada no navegador em tempo real
     },
 
     stopTts() {
@@ -157,5 +163,15 @@ export const ttsHandler = () => ({
         this.stopAmbientMusic();
         this.isSpeaking = false;
         this.isPaused = false;
+        this._audioUrls = []; // Reseta a playlist
+        this._currentAudioIndex = 0; // Reseta o índice
+    },
+
+    // Funções auxiliares para música ambiente (assumindo que existam em outro lugar)
+    startAmbientMusic() {
+        console.log('[TTS] Música ambiente iniciada.');
+    },
+    stopAmbientMusic() {
+        console.log('[TTS] Música ambiente parada.');
     },
 });
