@@ -118,7 +118,7 @@ class BibleService
      */
     public function getVersesByReference(string $reference): array
     {
-        $cacheKey = 'bible_ref_' . md5(Str::lower(trim($reference)));
+        $cacheKey = 'bible_ref_'.md5(Str::lower(trim($reference)));
 
         return Cache::remember($cacheKey, now()->addDays(30), function () use ($reference) {
             $parsed = $this->parseReference($reference);
@@ -162,7 +162,7 @@ class BibleService
             $request = Http::acceptJson()->withUserAgent('LampadaApp/1.0');
 
             if ($this->token) {
-                $request->withToken($this->token);
+                $request = $request->withToken($this->token);
             }
 
             $response = $request->get($endpoint);
