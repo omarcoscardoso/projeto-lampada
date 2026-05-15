@@ -40,53 +40,6 @@ class TtsController extends Controller
             ], 500);
         }
 
-        // Manifesto identificado apenas pelo hash do texto completo dentro da pasta da data
-        $manifestPath = "audio/{$month}/{$day}/{$fullTextHash}.json";
-
-        // Verifica se o manifesto (lista de URLs de áudio) já existe no cache
-        try {
-            if ($disk->exists($manifestPath)) {
-                $manifestContent = $disk->get($manifestPath);
-                $manifestData = json_decode($manifestContent, true);
-                if (isset($manifestData['urls']) && is_array($manifestData['urls'])) {
-                    // Verifica se o primeiro chunk realmente existe para evitar "cache fantasma"
-                    $firstUrl = $manifestData['urls'][0] ?? null;
-                    $isValid = false;
-
-                    if ($firstUrl) {
-                        // Tenta extrair o caminho relativo da URL para verificar existência
-                        $pathSearch = "audio/{$month}/{$day}/chunks";
-                        $pos = strpos($firstUrl, $pathSearch);
-                        $relativePath = ($pos !== false) ? substr($firstUrl, $pos) : null;
-
-                        // Decode URL entities (like %2F) before checking existence
-                        if ($relativePath) {
-                            $relativePath = rawurldecode($relativePath);
-                        }
-
-                        if ($relativePath && $disk->exists($relativePath)) {
-                            $isValid = true;
-                        }
-                    }
-
-                    if ($isValid) {
-                        Log::info('[TTS] Manifesto e áudios validados no cache para hash: ' . $fullTextHash);
-                        return response()->json([
-                            'success' => true,
-                            'urls' => $manifestData['urls'],
-                            'cached' => true,
-                        ]);
-                    }
-
-                    Log::warning('[TTS] Manifesto existe mas áudios não foram encontrados. Regenerando...');
-                }
-                // Se o manifesto existir mas for inválido, deletamos para gerar novamente
-                $disk->delete($manifestPath);
-            }
-        } catch (\Exception $e) {
-            Log::warning('[TTS] Erro ao verificar manifesto no GCS: ' . $e->getMessage());
-        }
-
         $apiKey = env('GOOGLE_TTS_API_KEY');
 
         if (!$apiKey) {
@@ -99,6 +52,7 @@ class TtsController extends Controller
 
         $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
         $audioUrls = [];
+        $anyGenerated = false;
 
         foreach ($textChunks as $index => $chunk) {
             // Geramos o hash do conteúdo do chunk para garantir unicidade
@@ -110,6 +64,7 @@ class TtsController extends Controller
             // Verifica se o áudio do chunk individual já existe
             try {
                 if ($disk->exists($chunkPath)) {
+                    Log::debug("[TTS] Chunk {$index} encontrado no cache.");
                     $audioUrls[] = $disk->url($chunkPath);
                     continue; // Pula a geração para este chunk
                 }
@@ -134,13 +89,14 @@ class TtsController extends Controller
 
             if ($response->successful()) {
                 $audioContent = base64_decode($response->json('audioContent'));
+                $anyGenerated = true;
 
                 try {
-                    // Definimos o mimetype corretamente para que o GCS sirva como áudio e não como download/binário
+                    // Importante: mimetype e ContentType garantem que o navegador não dê 404/NotSupported
                     $disk->put($chunkPath, $audioContent, [
                         'visibility' => 'public',
                         'mimetype' => 'audio/mpeg',
-                        'ContentType' => 'audio/mpeg',
+                        'metadata' => ['contentType' => 'audio/mpeg']
                     ]);
                     $audioUrls[] = $disk->url($chunkPath);
                 } catch (\Exception $e) {
@@ -156,23 +112,12 @@ class TtsController extends Controller
             }
         }
 
-        // Salva o arquivo de manifesto com todas as URLs geradas
-        try {
-            $disk->put($manifestPath, json_encode(['urls' => $audioUrls]), [
-                'visibility' => 'public',
-                'metadata' => [
-                    'contentType' => 'application/json',
-                ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('[TTS] Falha ao salvar manifesto no bucket: ' . $e->getMessage());
-            // Isso não é crítico o suficiente para falhar toda a requisição, apenas loga.
-        }
+        Log::info("[TTS] Processamento concluído. Chunks totais: " . count($audioUrls) . ($anyGenerated ? " (Novos gerados)" : " (Todos do cache)"));
 
         return response()->json([
             'success' => true,
             'urls' => $audioUrls,
-            'cached' => false,
+            'cached' => !$anyGenerated,
         ]);
     }
 
