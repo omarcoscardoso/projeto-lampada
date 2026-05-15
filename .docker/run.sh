@@ -1,9 +1,15 @@
 #!/bin/sh
 
-# Aguardar o banco de dados estar disponível (opcional, mas recomendado)
-# (substitua 'db' pelo nome do serviço do seu banco de dados no docker-compose)
-# A função abaixo pode ser adicionada ao script, ou você pode usar uma imagem como "wait-for-it.sh"
-# wait-for-it db:3306 -t 30 
+# Garantir permissões de escrita em runtime (necessário no Cloud Run onde o
+# container pode rodar como usuário diferente do build)
+echo "Fixing storage permissions..."
+mkdir -p /var/www/html/storage/logs
+mkdir -p /var/www/html/storage/framework/cache
+mkdir -p /var/www/html/storage/framework/sessions
+mkdir -p /var/www/html/storage/framework/views
+mkdir -p /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
 
 echo "Running migrations..."
 php artisan migrate --force --no-interaction
