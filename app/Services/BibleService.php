@@ -156,7 +156,7 @@ class BibleService
 
     private function fetchChapterWithRetry(string $book, int $chapter, array $parsed): array
     {
-        $versionsToTry = array_unique([$this->version, 'nvi', 'acf', 'aa', 'ra']);
+        $versionsToTry = array_unique([$this->version, 'nvi', 'acf', 'aa', 'ra', 'kjv']); // Added KJV as another common fallback
 
         foreach ($versionsToTry as $currentVersion) {
             $endpoint = "{$this->baseUrl}/verses/{$currentVersion}/{$book}/{$chapter}";
@@ -166,11 +166,14 @@ class BibleService
                 $request = $request->withToken($this->token);
             }
 
+            $originalReference = $parsed['original_reference'] ?? 'unknown';
+
             try {
+                Log::debug("[BibleService] Tentando buscar {$book} {$chapter} ({$currentVersion}) para referência original: {$originalReference}");
                 $response = $request->get($endpoint);
 
                 if ($response->status() === 403 && $this->token) {
-                    Log::warning("[BibleService] 403 recebido com token, tentando sem token para: {$endpoint}");
+                    Log::warning("[BibleService] 403 recebido com token para {$endpoint} (ref: {$originalReference}), tentando sem token.");
                     $response = Http::acceptJson()->withUserAgent('LampadaApp/1.0')->get($endpoint);
                 }
             } catch (\Exception $e) {
@@ -188,6 +191,11 @@ class BibleService
 
                         return $parsed['end_verse'] ? ($num >= $parsed['start_verse'] && $num <= $parsed['end_verse']) : ($num === $parsed['start_verse']);
                     }));
+                    Log::debug("[BibleService] Verses filtered for {$book} {$chapter} (ref: {$originalReference}): " . count($filteredVerses) . " out of " . count($verses) . " original verses.");
+                    $verses = $filteredVerses;
+                }
+                if (empty($verses)) {
+                    Log::warning("[BibleService] Nenhuma verso encontrado após filtragem para {$book} {$chapter} ({$currentVersion}) para referência original: {$originalReference}. API response successful, but verses array is empty or filtered out.");
                 }
 
                 return [
