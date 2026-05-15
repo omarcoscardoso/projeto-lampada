@@ -186,13 +186,13 @@ class BibleService
 
                 // Individual verse filtering only applies if single chapter
                 if (count($parsed['chapters']) === 1 && $parsed['start_verse']) {
+                    $originalCount = count($verses);
                     $verses = array_values(array_filter($verses, function ($v) use ($parsed) {
                         $num = (int) $v['number'];
 
                         return $parsed['end_verse'] ? ($num >= $parsed['start_verse'] && $num <= $parsed['end_verse']) : ($num === $parsed['start_verse']);
                     }));
-                    Log::debug("[BibleService] Verses filtered for {$book} {$chapter} (ref: {$originalReference}): " . count($filteredVerses) . " out of " . count($verses) . " original verses.");
-                    $verses = $filteredVerses;
+                    Log::debug("[BibleService] Verses filtered for {$book} {$chapter} (ref: {$originalReference}): " . count($verses) . " out of " . $originalCount . " original verses.");
                 }
                 if (empty($verses)) {
                     Log::warning("[BibleService] Nenhuma verso encontrado após filtragem para {$book} {$chapter} ({$currentVersion}) para referência original: {$originalReference}. API response successful, but verses array is empty or filtered out.");
@@ -270,6 +270,7 @@ class BibleService
             'chapters' => array_map('intval', $chapters),
             'start_verse' => $startVerse,
             'end_verse' => $endVerse,
+            'original_reference' => $reference,
         ];
     }
 }
