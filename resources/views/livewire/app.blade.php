@@ -248,7 +248,7 @@
                             x-cloak>
 
                             <!-- Toggle: Anunciar versículos -->
-                            <div
+                            <!-- <div
                                 class="flex items-center justify-between mb-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Anunciar
@@ -263,7 +263,7 @@
                                         class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ease-in-out block">
                                     </span>
                                 </button>
-                            </div>
+                            </div> -->
 
                             <!-- Toggle: Música de Foco -->
                             <div

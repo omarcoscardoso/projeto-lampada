@@ -55,9 +55,14 @@ class TtsController extends Controller
 
                     if ($firstUrl) {
                         // Tenta extrair o caminho relativo da URL para verificar existência
-                        $pathSearch = "audio/{$month}/{$day}/chunks/";
+                        $pathSearch = "audio/{$month}/{$day}/chunks";
                         $pos = strpos($firstUrl, $pathSearch);
                         $relativePath = ($pos !== false) ? substr($firstUrl, $pos) : null;
+
+                        // Decode URL entities (like %2F) before checking existence
+                        if ($relativePath) {
+                            $relativePath = rawurldecode($relativePath);
+                        }
 
                         if ($relativePath && $disk->exists($relativePath)) {
                             $isValid = true;
@@ -131,12 +136,11 @@ class TtsController extends Controller
                 $audioContent = base64_decode($response->json('audioContent'));
 
                 try {
-                    // É CRÍTICO definir o metadata contentType para o navegador reconhecer o MP3
+                    // Definimos o mimetype corretamente para que o GCS sirva como áudio e não como download/binário
                     $disk->put($chunkPath, $audioContent, [
                         'visibility' => 'public',
-                        'metadata' => [
-                            'contentType' => 'audio/mpeg',
-                        ],
+                        'mimetype' => 'audio/mpeg',
+                        'ContentType' => 'audio/mpeg',
                     ]);
                     $audioUrls[] = $disk->url($chunkPath);
                 } catch (\Exception $e) {
