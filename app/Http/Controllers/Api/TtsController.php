@@ -22,8 +22,13 @@ class TtsController extends Controller
         $dateParts = explode('/', $request->input('date'));
         $month = $dateParts[0];
         $day = $dateParts[1];
-        $fullText = $request->input('text');
-        $fullTextHash = substr(md5($fullText), 0, 16); // Hash mais longo para o texto completo
+
+        // Normalização: Remove espaços extras e padroniza quebras de linha para evitar hashes diferentes por bobeira
+        $fullText = trim($request->input('text'));
+        $fullText = str_replace(["\r\n", "\r"], "\n", $fullText);
+        $fullText = preg_replace("/\n{2,}/", "\n\n", $fullText); // Opcional: evita múltiplas quebras seguidas
+
+        $fullTextHash = substr(md5($fullText), 0, 16);
 
         try {
             $disk = Storage::disk('gcs');
@@ -35,7 +40,8 @@ class TtsController extends Controller
             ], 500);
         }
 
-        $manifestPath = "audio/{$month}/{$day}/leitura_{$fullTextHash}_manifest.json";
+        // Manifesto identificado apenas pelo hash do texto completo dentro da pasta da data
+        $manifestPath = "audio/{$month}/{$day}/{$fullTextHash}.json";
 
         // Verifica se o manifesto (lista de URLs de áudio) já existe no cache
         try {
@@ -71,8 +77,11 @@ class TtsController extends Controller
         $audioUrls = [];
 
         foreach ($textChunks as $index => $chunk) {
-            $chunkHash = substr(md5($chunk), 0, 10); // Hash para o chunk individual
-            $chunkPath = "audio/{$month}/{$day}/leitura_{$fullTextHash}_chunk_{$index}_{$chunkHash}.mp3";
+            // Geramos o hash do conteúdo do chunk para garantir unicidade
+            $chunkHash = md5($chunk);
+
+            // Organizamos os pedaços em uma subpasta 'chunks' para manter o diretório da data limpo
+            $chunkPath = "audio/{$month}/{$day}/chunks/{$chunkHash}.mp3";
 
             // Verifica se o áudio do chunk individual já existe
             try {

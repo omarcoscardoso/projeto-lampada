@@ -40,7 +40,7 @@ class BibleService
         'esdras' => 'ed',
         'neemias' => 'ne',
         'ester' => 'et',
-        'jó' => 'jo',
+        'jó' => 'job',
         'salmos' => 'sl',
         'provérbios' => 'pv',
         'proverbios' => 'pv',
@@ -71,7 +71,7 @@ class BibleService
         'mateus' => 'mt',
         'marcos' => 'mc',
         'lucas' => 'lc',
-        'joão' => 'joa',
+        'joão' => 'jo',
         'atos' => 'at',
         'romanos' => 'rm',
         '1 coríntios' => '1co',
@@ -118,7 +118,7 @@ class BibleService
      */
     public function getVersesByReference(string $reference): array
     {
-        $cacheKey = 'bible_ref_'.md5(Str::lower(trim($reference)));
+        $cacheKey = 'bible_ref_' . md5(Str::lower(trim($reference)));
 
         return Cache::remember($cacheKey, now()->addDays(30), function () use ($reference) {
             $parsed = $this->parseReference($reference);

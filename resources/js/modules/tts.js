@@ -122,14 +122,15 @@ export const ttsHandler = () => ({
         }
 
         const url = this._audioUrls[this._currentAudioIndex];
-        const timestampedUrl = `${url}${url.includes('?') ? '&' : '?'}t=${new Date().getTime()}`;
 
         if (this._audioElement) {
             this._audioElement.pause();
             this._audioElement = null;
         }
 
-        this._audioElement = new Audio(timestampedUrl);
+        // Como o nome do arquivo é um hash do conteúdo, ele é imutável. 
+        // Podemos remover o timestamp para aproveitar o cache do navegador.
+        this._audioElement = new Audio(url);
 
         this._audioElement.onended = () => {
             console.log(`[TTS] Chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length} finalizado.`);
