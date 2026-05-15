@@ -49,12 +49,31 @@ class TtsController extends Controller
                 $manifestContent = $disk->get($manifestPath);
                 $manifestData = json_decode($manifestContent, true);
                 if (isset($manifestData['urls']) && is_array($manifestData['urls'])) {
-                    Log::info('[TTS] Manifesto encontrado no cache para hash: ' . $fullTextHash);
-                    return response()->json([
-                        'success' => true,
-                        'urls' => $manifestData['urls'],
-                        'cached' => true,
-                    ]);
+                    // Verifica se o primeiro chunk realmente existe para evitar "cache fantasma"
+                    $firstUrl = $manifestData['urls'][0] ?? null;
+                    $isValid = false;
+
+                    if ($firstUrl) {
+                        // Tenta extrair o caminho relativo da URL para verificar existência
+                        $pathSearch = "audio/{$month}/{$day}/chunks/";
+                        $pos = strpos($firstUrl, $pathSearch);
+                        $relativePath = ($pos !== false) ? substr($firstUrl, $pos) : null;
+
+                        if ($relativePath && $disk->exists($relativePath)) {
+                            $isValid = true;
+                        }
+                    }
+
+                    if ($isValid) {
+                        Log::info('[TTS] Manifesto e áudios validados no cache para hash: ' . $fullTextHash);
+                        return response()->json([
+                            'success' => true,
+                            'urls' => $manifestData['urls'],
+                            'cached' => true,
+                        ]);
+                    }
+
+                    Log::warning('[TTS] Manifesto existe mas áudios não foram encontrados. Regenerando...');
                 }
                 // Se o manifesto existir mas for inválido, deletamos para gerar novamente
                 $disk->delete($manifestPath);

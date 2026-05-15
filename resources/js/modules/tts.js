@@ -140,6 +140,14 @@ export const ttsHandler = () => ({
 
         this._audioElement.onerror = (e) => {
             console.error(`[TTS] Erro no carregamento do chunk de áudio ${this._currentAudioIndex + 1}:`, url, e);
+
+            // Tenta verificar se o erro é um 404 via fetch para logar melhor
+            fetch(url, { method: 'HEAD' }).then(res => {
+                if (!res.ok) {
+                    console.error(`[TTS] Arquivo MP3 não encontrado ou inacessível (Status: ${res.status})`);
+                }
+            }).catch(() => { });
+
             this.stopTts(); // Para a playlist inteira em caso de erro
             alert('Erro ao carregar um trecho do áudio.');
         };
