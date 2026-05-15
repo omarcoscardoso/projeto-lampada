@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class BibleService
@@ -120,81 +122,127 @@ class BibleService
     {
         $cacheKey = 'bible_ref_'.md5(Str::lower(trim($reference)));
 
-        return Cache::remember($cacheKey, now()->addDays(30), function () use ($reference) {
-            $parsed = $this->parseReference($reference);
+        // Never cache failures so we can debug and retry
+        $cached = Cache::get($cacheKey);
+        if ($cached && ($cached['success'] ?? false)) {
+            return $cached;
+        }
 
-            if (! $parsed) {
-                return ['success' => false, 'message' => "Referência inválida: {$reference}", 'chapters' => []];
+        $parsed = $this->parseReference($reference);
+
+        if (! $parsed) {
+            return ['success' => false, 'message' => "Referência inválida: {$reference}", 'chapters' => []];
+        }
+
+        $allResults = [];
+        $bookName = '';
+        $finalVersion = '';
+        $allDebug = [];
+
+        foreach ($parsed['chapters'] as $chapter) {
+            $chapterData = $this->fetchChapterWithRetry($parsed['book'], $chapter, $parsed);
+            if ($chapterData['success']) {
+                $allResults[] = $chapterData;
+                $bookName = $chapterData['book_name'];
+                $finalVersion = $chapterData['version'];
+            } else {
+                $allDebug = array_merge($allDebug, $chapterData['debug'] ?? []);
             }
+        }
 
-            $allResults = [];
-            $bookName = '';
-            $finalVersion = '';
-
-            foreach ($parsed['chapters'] as $chapter) {
-                $chapterData = $this->fetchChapterWithRetry($parsed['book'], $chapter, $parsed);
-                if ($chapterData['success']) {
-                    $allResults[] = $chapterData;
-                    $bookName = $chapterData['book_name'];
-                    $finalVersion = $chapterData['version'];
-                }
-            }
-
-            if (empty($allResults)) {
-                return ['success' => false, 'message' => "Não foi possível carregar os textos para {$reference}", 'chapters' => []];
-            }
-
+        if (empty($allResults)) {
             return [
-                'success' => true,
-                'book_name' => $bookName,
-                'version' => $finalVersion,
-                'chapters' => $allResults,
+                'success' => false,
+                'message' => "Não foi possível carregar os textos para {$reference}",
+                'chapters' => [],
+                'debug_info' => $allDebug,
             ];
-        });
+        }
+
+        $result = [
+            'success' => true,
+            'book_name' => $bookName,
+            'version' => $finalVersion,
+            'chapters' => $allResults,
+        ];
+
+        Cache::put($cacheKey, $result, now()->addDays(30));
+
+        return $result;
     }
 
     private function fetchChapterWithRetry(string $book, int $chapter, array $parsed): array
     {
         $versionsToTry = array_unique([$this->version, 'nvi', 'acf', 'aa', 'ra']);
+        $debugAttempts = [];
 
         foreach ($versionsToTry as $currentVersion) {
             $endpoint = "{$this->baseUrl}/verses/{$currentVersion}/{$book}/{$chapter}";
-            $request = Http::acceptJson()->withUserAgent('LampadaApp/1.0');
+            $request = Http::acceptJson()->withUserAgent('LampadaApp/1.0')->timeout(15);
 
             if ($this->token) {
                 $request = $request->withToken($this->token);
             }
 
-            $response = $request->get($endpoint);
-
-            if ($response->status() === 403 && $this->token) {
-                $response = Http::acceptJson()->withUserAgent('LampadaApp/1.0')->get($endpoint);
-            }
-
-            if ($response->successful()) {
-                $data = $response->json();
-                $verses = $data['verses'] ?? [];
-
-                // Individual verse filtering only applies if single chapter
-                if (count($parsed['chapters']) === 1 && $parsed['start_verse']) {
-                    $verses = array_values(array_filter($verses, function ($v) use ($parsed) {
-                        $num = (int) $v['number'];
-
-                        return $parsed['end_verse'] ? ($num >= $parsed['start_verse'] && $num <= $parsed['end_verse']) : ($num === $parsed['start_verse']);
-                    }));
-                }
-
-                return [
-                    'success' => true,
-                    'number' => $chapter,
-                    'book_name' => $data['book']['name'] ?? '',
+            try {
+                $response = $request->get($endpoint);
+            } catch (ConnectionException $e) {
+                $debugAttempts[] = [
                     'version' => $currentVersion,
-                    'verses' => $verses,
+                    'endpoint' => $endpoint,
+                    'error' => 'connection_exception: '.$e->getMessage(),
                 ];
+                Log::warning('BibleService: connection error', [
+                    'endpoint' => $endpoint,
+                    'error' => $e->getMessage(),
+                ]);
+
+                continue;
             }
+
+            $attempt = [
+                'version' => $currentVersion,
+                'endpoint' => $endpoint,
+                'status' => $response->status(),
+                'has_token' => (bool) $this->token,
+            ];
+
+            if (! $response->successful()) {
+                $attempt['response_body'] = substr($response->body(), 0, 300);
+                Log::warning('BibleService: failed attempt', $attempt);
+                $debugAttempts[] = $attempt;
+
+                continue;
+            }
+
+            $data = $response->json();
+            $verses = $data['verses'] ?? [];
+
+            // Individual verse filtering only applies if single chapter
+            if (count($parsed['chapters']) === 1 && $parsed['start_verse']) {
+                $verses = array_values(array_filter($verses, function ($v) use ($parsed) {
+                    $num = (int) $v['number'];
+
+                    return $parsed['end_verse'] ? ($num >= $parsed['start_verse'] && $num <= $parsed['end_verse']) : ($num === $parsed['start_verse']);
+                }));
+            }
+
+            return [
+                'success' => true,
+                'number' => $chapter,
+                'book_name' => $data['book']['name'] ?? '',
+                'version' => $currentVersion,
+                'verses' => $verses,
+            ];
         }
 
-        return ['success' => false];
+        Log::error('BibleService: all versions failed', [
+            'book' => $book,
+            'chapter' => $chapter,
+            'attempts' => $debugAttempts,
+        ]);
+
+        return ['success' => false, 'debug' => $debugAttempts];
     }
 
     private function parseReference(string $reference): ?array
