@@ -96,8 +96,7 @@ class TtsController extends Controller
             $url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' . $apiKey;
 
             try {
-                // Adicionado timeout e tratamento de exceção de conexão
-                $response = Http::timeout(30)->post($url, [
+                $response = Http::post($url, [
                     'input' => [
                         'text' => $chunk,
                     ],
@@ -152,8 +151,12 @@ class TtsController extends Controller
             'cached' => !$anyGenerated,
             'debug' => [
                 'chunk_count' => count($textChunks),
-                'bucket' => config('filesystems.disks.gcs.bucket') ?? 'NÃO CONFIGURADO',
-                'any_generated' => $anyGenerated
+                'bucket' => config('filesystems.disks.gcs.bucket') ?? 'VAZIO',
+                'disk_driver' => config('filesystems.disks.gcs.driver') ?? 'DESCONHECIDO',
+                'any_generated' => $anyGenerated,
+                'input_text_length' => mb_strlen($fullText),
+                'api_key_loaded' => !empty($apiKey),
+                'first_url_returned' => $audioUrls[0] ?? 'NENHUMA'
             ]
         ]);
     }
