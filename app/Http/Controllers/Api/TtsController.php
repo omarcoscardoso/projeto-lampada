@@ -14,9 +14,12 @@ class TtsController extends Controller
 
     public function generate(Request $request)
     {
+        // Este comando escreve direto no stderr do container, ignorando o LOG_CHANNEL do Laravel
+        error_log("[TTS] Iniciando método generate no Cloud Run");
+
         $request->validate([
             'date' => 'required|string|regex:/^\d{2}\/\d{2}$/',
-            'text' => 'required|string|max:800000', // Aumentado para permitir textos mais longos, o chunking cuidará do limite da API
+            'text' => 'required|string|max:500000', // Aumentado para permitir textos mais longos, o chunking cuidará do limite da API
         ]);
 
         Log::info("[TTS] Nova requisição", [
@@ -59,6 +62,13 @@ class TtsController extends Controller
         }
 
         $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
+
+        if (empty($textChunks)) {
+            error_log("[TTS] Alerta: O texto resultou em 0 chunks.");
+        } else {
+            error_log("[TTS] Chunks a processar: " . count($textChunks));
+        }
+
         Log::info("[TTS] Texto dividido em " . count($textChunks) . " chunks.");
 
         $audioUrls = [];

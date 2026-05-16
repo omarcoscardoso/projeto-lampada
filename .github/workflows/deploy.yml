@@ -57,6 +57,7 @@ jobs:
             APP_URL=${{ vars.APP_URL }},
             APP_DEBUG=true,
             APP_LOCALE=pt_BR,
+            LOG_CHANNEL=stderr,
             DB_CONNECTION=mysql,
             DB_SOCKET=/cloudsql/${{ vars.CLOUD_SQL_INSTANCE }},
             DB_DATABASE=${{ vars.DB_DATABASE }},
