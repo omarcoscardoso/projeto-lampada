@@ -19,6 +19,11 @@ class TtsController extends Controller
             'text' => 'required|string|max:800000', // Aumentado para permitir textos mais longos, o chunking cuidará do limite da API
         ]);
 
+        Log::info("[TTS] Nova requisição", [
+            'date' => $request->input('date'),
+            'text_length' => mb_strlen($request->input('text'))
+        ]);
+
         $dateParts = explode('/', $request->input('date'));
         $month = $dateParts[0];
         $day = $dateParts[1];
@@ -31,6 +36,8 @@ class TtsController extends Controller
         $fullTextHash = substr(md5($fullText), 0, 16);
 
         try {
+            $bucketName = config('filesystems.disks.gcs.bucket');
+            Log::info("[TTS] Usando bucket: " . $bucketName);
             $disk = Storage::disk('gcs');
         } catch (\Exception $e) {
             Log::error('[TTS] Erro ao inicializar disco GCS: ' . $e->getMessage(), ['exception' => $e]);
@@ -52,6 +59,8 @@ class TtsController extends Controller
         }
 
         $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
+        Log::info("[TTS] Texto dividido em " . count($textChunks) . " chunks.");
+
         $audioUrls = [];
         $anyGenerated = false;
 
@@ -131,6 +140,11 @@ class TtsController extends Controller
             'success' => true,
             'urls' => $audioUrls,
             'cached' => !$anyGenerated,
+            'debug' => [
+                'chunk_count' => count($textChunks),
+                'bucket' => config('filesystems.disks.gcs.bucket') ?? 'NÃO CONFIGURADO',
+                'any_generated' => $anyGenerated
+            ]
         ]);
     }
 
