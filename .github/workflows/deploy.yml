@@ -70,8 +70,8 @@ jobs:
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},
             GOOGLE_REDIRECT_URL=${{ vars.GOOGLE_REDIRECT_URL }},
             GOOGLE_CLOUD_PROJECT_ID=${{ env.PROJECT_ID }},
-            GOOGLE_CLOUD_KEY_JSON=${{ secrets.GOOGLE_CLOUD_KEY_JSON }},
             GOOGLE_CLOUD_STORAGE_BUCKET=${{ vars.GOOGLE_CLOUD_STORAGE_BUCKET }},
-            GOOGLE_TTS_API_KEY=${{ secrets.GOOGLE_TTS_API_KEY }}
+            GOOGLE_TTS_API_KEY=${{ secrets.GOOGLE_TTS_API_KEY }},
+            GOOGLE_CLOUD_KEY_JSON='${{ secrets.GOOGLE_CLOUD_KEY_JSON }}'
       - name: Exibir URL do Cloud Run
         run: echo "'Service URL:' ${{ steps.deploy.outputs.url }}"

@@ -19,7 +19,7 @@ class TtsController extends Controller
 
         $request->validate([
             'date' => 'required|string|regex:/^\d{2}\/\d{2}$/',
-            'text' => 'required|string|max:800000',
+            'text' => 'required|string|max:500000',
         ]);
 
         $textInput = $request->input('text');
