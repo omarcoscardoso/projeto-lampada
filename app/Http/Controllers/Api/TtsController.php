@@ -16,7 +16,7 @@ class TtsController extends Controller
     {
         $request->validate([
             'date' => 'required|string|regex:/^\d{2}\/\d{2}$/',
-            'text' => 'required|string|max:500000', // Aumentado para permitir textos mais longos, o chunking cuidará do limite da API
+            'text' => 'required|string|max:800000', // Aumentado para permitir textos mais longos, o chunking cuidará do limite da API
         ]);
 
         $dateParts = explode('/', $request->input('date'));
@@ -65,8 +65,9 @@ class TtsController extends Controller
             // Verifica se o áudio do chunk individual já existe
             try {
                 if ($disk->exists($chunkPath)) {
-                    Log::debug("[TTS] Chunk {$index} encontrado no cache.");
-                    $audioUrls[] = $disk->url($chunkPath);
+                    $url = $disk->url($chunkPath);
+                    Log::debug("[TTS] Chunk {$index} encontrado no cache: {$chunkPath}. URL gerada: {$url}");
+                    $audioUrls[] = $url;
                     continue; // Pula a geração para este chunk
                 }
             } catch (\Exception $e) {
@@ -102,13 +103,15 @@ class TtsController extends Controller
                 $anyGenerated = true;
 
                 try {
-                    // Importante: mimetype e ContentType garantem que o navegador não dê 404/NotSupported
                     $disk->put($chunkPath, $audioContent, [
                         'visibility' => 'public',
                         'mimetype' => 'audio/mpeg',
                         'metadata' => ['contentType' => 'audio/mpeg']
                     ]);
-                    $audioUrls[] = $disk->url($chunkPath);
+
+                    $url = $disk->url($chunkPath);
+                    Log::info("[TTS] Chunk {$index} gerado e salvo com sucesso: {$chunkPath}. URL: {$url}");
+                    $audioUrls[] = $url;
                 } catch (\Exception $e) {
                     Log::error('[TTS] Falha ao salvar chunk de áudio no bucket: ' . $e->getMessage());
                     return response()->json(['success' => false, 'message' => 'Erro ao salvar áudio no storage.'], 500);
