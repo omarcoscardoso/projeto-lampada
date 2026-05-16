@@ -44,7 +44,7 @@ class TtsController extends Controller
         $apiKey = config('services.google.tts_key') ?? env('GOOGLE_TTS_API_KEY');
 
         if (!$apiKey) {
-            Log::error('[TTS] Chave da API do Google não encontrada. Certifique-se de usar config:cache corretamente.');
+            Log::error('[TTS] Erro: Chave da API do Google (GOOGLE_TTS_API_KEY) está vazia ou nula em produção.');
             return response()->json([
                 'success' => false,
                 'message' => 'Erro de configuração na API de voz.'
@@ -66,7 +66,7 @@ class TtsController extends Controller
             try {
                 if ($disk->exists($chunkPath)) {
                     $url = $disk->url($chunkPath);
-                    Log::debug("[TTS] Chunk {$index} encontrado no cache: {$chunkPath}. URL gerada: {$url}");
+                    Log::info("[TTS] Chunk {$index} em cache: {$chunkPath}. URL: {$url}");
                     $audioUrls[] = $url;
                     continue; // Pula a geração para este chunk
                 }
@@ -110,18 +110,18 @@ class TtsController extends Controller
                     ]);
 
                     $url = $disk->url($chunkPath);
-                    Log::info("[TTS] Chunk {$index} gerado e salvo com sucesso: {$chunkPath}. URL: {$url}");
+                    Log::info("[TTS] Chunk {$index} NOVO: Gerado e salvo. URL: {$url}");
                     $audioUrls[] = $url;
                 } catch (\Exception $e) {
-                    Log::error('[TTS] Falha ao salvar chunk de áudio no bucket: ' . $e->getMessage());
+                    Log::error("[TTS] Erro GCS ao salvar chunk {$index}: " . $e->getMessage());
                     return response()->json(['success' => false, 'message' => 'Erro ao salvar áudio no storage.'], 500);
                 }
             } else {
-                Log::error('[TTS] Falha na API do Google para chunk ' . $index . ': ' . $response->body());
+                Log::error("[TTS] Erro API Google (Status {$response->status()}) no chunk {$index}: " . $response->body());
                 return response()->json([
                     'success' => false,
                     'message' => 'Erro ao gerar áudio para um dos trechos.',
-                ], 500);
+                ], $response->status() ?: 500);
             }
         }
 
