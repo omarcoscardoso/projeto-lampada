@@ -19,7 +19,7 @@ class TtsController extends Controller
 
         $request->validate([
             'date' => 'required|string|regex:/^\d{2}\/\d{2}$/',
-            'text' => 'required|string|max:800000',
+            'text' => 'required|string|max:500000',
         ]);
 
         $textInput = $request->input('text');
@@ -43,6 +43,7 @@ class TtsController extends Controller
             $executionTrace[] = "Disco GCS inicializado com driver: " . config('filesystems.disks.gcs.driver');
         } catch (\Exception $e) {
             Log::error('[TTS] Erro ao inicializar disco GCS: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('[TTS] Falha ao inicializar disco GCS: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Erro de configuração no servidor de armazenamento (GCS).'
@@ -51,6 +52,11 @@ class TtsController extends Controller
 
         $apiKey = config('services.google.tts_key') ?? env('GOOGLE_TTS_API_KEY');
         $executionTrace[] = "Google API Key carregada: " . ($apiKey ? 'SIM' : 'NÃO');
+
+        if (!$apiKey) {
+            Log::error('[TTS] Chave da API do Google não encontrada.');
+            return response()->json(['success' => false, 'message' => 'Erro de configuração na API de voz.'], 500);
+        }
 
         $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
         $executionTrace[] = "Total de chunks: " . count($textChunks);
@@ -71,12 +77,14 @@ class TtsController extends Controller
                 $executionTrace[] = "Verificando chunk $index ($chunkHash): " . ($exists ? 'EXISTE' : 'NÃO EXISTE');
 
                 if ($exists) {
+                if ($disk->exists($chunkPath)) {
                     $url = $disk->url($chunkPath);
                     $audioUrls[] = $url;
                     continue; // Pula a geração para este chunk
                 }
             } catch (\Exception $e) {
                 $executionTrace[] = "Erro ao verificar GCS: " . $e->getMessage();
+                Log::warning("[TTS] Erro ao verificar existência no GCS para {$chunkPath}: " . $e->getMessage());
             }
 
             $url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' . $apiKey;
@@ -96,6 +104,7 @@ class TtsController extends Controller
                 ]);
             } catch (\Exception $e) {
                 $executionTrace[] = "Erro de rede Google API: " . $e->getMessage();
+                Log::error("[TTS] Erro de rede ao conectar com Google API: " . $e->getMessage());
                 return response()->json([
                     'success' => false,
                     'message' => 'Falha de comunicação com o serviço de voz externo.',
@@ -106,25 +115,33 @@ class TtsController extends Controller
             if ($response->successful()) {
                 $audioContent = base64_decode($response->json('audioContent') ?? '');
                 $executionTrace[] = "Google TTS OK. Audio gerado: " . strlen($audioContent) . " bytes.";
+                $audioContent = base64_decode($response->json('audioContent', ''));
                 $anyGenerated = true;
 
                 try {
                     $putResult = $disk->put($chunkPath, $audioContent, [
+                    $uploaded = $disk->put($chunkPath, $audioContent, [
                         'visibility' => 'public',
                         'mimetype' => 'audio/mpeg',
                         'metadata' => ['contentType' => 'audio/mpeg']
                     ]);
 
                     $executionTrace[] = "Resultado do put no GCS: " . ($putResult ? 'SUCESSO' : 'FALHA');
+                    if (!$uploaded) {
+                        throw new \Exception("O driver GCS retornou falso durante o upload.");
+                    }
 
                     $url = $disk->url($chunkPath);
                     $audioUrls[] = $url;
                 } catch (\Exception $e) {
                     $executionTrace[] = "Exceção ao salvar no GCS: " . $e->getMessage();
                     return response()->json(['success' => false, 'message' => 'Erro ao salvar no storage.', 'trace' => $executionTrace], 500);
+                    Log::error("[TTS] Erro ao salvar chunk {$index} no GCS: " . $e->getMessage());
+                    return response()->json(['success' => false, 'message' => 'Erro ao salvar áudio no storage.'], 500);
                 }
             } else {
                 $executionTrace[] = "Erro API Google Status " . $response->status() . ": " . $response->body();
+                Log::error("[TTS] Erro API Google (Status {$response->status()}): " . $response->body());
                 return response()->json([
                     'success' => false,
                     'message' => 'Erro ao gerar áudio para um dos trechos.',
@@ -140,6 +157,7 @@ class TtsController extends Controller
                 'trace' => $executionTrace,
                 'final_bucket' => config('filesystems.disks.gcs.bucket')
             ]
+            'cached' => !$anyGenerated
         ]);
     }
 
