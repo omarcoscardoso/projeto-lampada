@@ -14,7 +14,7 @@ export const ambientMusic = () => ({
     },
 
     startAmbientMusic() {
-        if (this._audioCtx) { return; }
+        if (this._audioCtx && this.isMusicPlaying) { return; }
 
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) {

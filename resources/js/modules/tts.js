@@ -40,14 +40,14 @@ export const ttsHandler = () => ({
     async toggleTts() {
         if (this.isSpeaking && !this.isPaused) {
             this._audioElement?.pause();
-            this.stopAmbientMusic();
+            if (this.ttsAutoMusic) this.stopAmbientMusic();
             this.isPaused = true;
             return;
         }
 
         if (this.isSpeaking && this.isPaused) {
             this._audioElement?.play();
-            this.startAmbientMusic();
+            if (this.ttsAutoMusic) this.startAmbientMusic();
             this.isPaused = false;
             return;
         }
@@ -128,8 +128,6 @@ export const ttsHandler = () => ({
             this._audioElement = null;
         }
 
-        // Como o nome do arquivo é um hash do conteúdo, ele é imutável. 
-        // Podemos remover o timestamp para aproveitar o cache do navegador.
         this._audioElement = new Audio(url);
 
         this._audioElement.onended = () => {
@@ -169,18 +167,10 @@ export const ttsHandler = () => ({
             this._audioElement.pause();
             this._audioElement.currentTime = 0;
         }
-        this.stopAmbientMusic();
+        if (this.ttsAutoMusic) this.stopAmbientMusic();
         this.isSpeaking = false;
         this.isPaused = false;
         this._audioUrls = []; // Reseta a playlist
         this._currentAudioIndex = 0; // Reseta o índice
-    },
-
-    // Funções auxiliares para música ambiente (assumindo que existam em outro lugar)
-    startAmbientMusic() {
-        console.log('[TTS] Música ambiente iniciada.');
-    },
-    stopAmbientMusic() {
-        console.log('[TTS] Música ambiente parada.');
     },
 });
