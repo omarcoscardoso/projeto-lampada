@@ -40,10 +40,11 @@ class TtsController extends Controller
             ], 500);
         }
 
-        $apiKey = env('GOOGLE_TTS_API_KEY');
+        // Busca do config/services.php ou fallback para env() se não estiver cacheado
+        $apiKey = config('services.google.tts_key') ?? env('GOOGLE_TTS_API_KEY');
 
         if (!$apiKey) {
-            Log::error('[TTS] GOOGLE_TTS_API_KEY não configurada no .env');
+            Log::error('[TTS] Chave da API do Google não encontrada. Certifique-se de usar config:cache corretamente.');
             return response()->json([
                 'success' => false,
                 'message' => 'Erro de configuração na API de voz.'
@@ -74,18 +75,27 @@ class TtsController extends Controller
 
             $url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' . $apiKey;
 
-            $response = Http::post($url, [
-                'input' => [
-                    'text' => $chunk,
-                ],
-                'voice' => [
-                    'languageCode' => 'pt-BR',
-                    'name' => 'pt-BR-Standard-E', // Ou 'pt-BR-Wavenet-A', 'pt-BR-Wavenet-B', etc.
-                ],
-                'audioConfig' => [
-                    'audioEncoding' => 'MP3',
-                ],
-            ]);
+            try {
+                // Adicionado timeout e tratamento de exceção de conexão
+                $response = Http::timeout(30)->post($url, [
+                    'input' => [
+                        'text' => $chunk,
+                    ],
+                    'voice' => [
+                        'languageCode' => 'pt-BR',
+                        'name' => 'pt-BR-Standard-E',
+                    ],
+                    'audioConfig' => [
+                        'audioEncoding' => 'MP3',
+                    ],
+                ]);
+            } catch (\Exception $e) {
+                Log::error('[TTS] Erro de rede ao conectar com Google API: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Falha de comunicação com o serviço de voz externo.',
+                ], 500);
+            }
 
             if ($response->successful()) {
                 $audioContent = base64_decode($response->json('audioContent'));

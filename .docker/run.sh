@@ -1,5 +1,6 @@
 #!/bin/sh
 
+php artisan cache:clear
 # Garantir permissões de escrita em runtime (necessário no Cloud Run onde o
 # container pode rodar como usuário diferente do build)
 echo "Fixing storage permissions..."
@@ -16,7 +17,6 @@ php artisan migrate --force --no-interaction
 php artisan db:seed --force --no-interaction
 php artisan shield:generate --all --no-interaction
 php artisan permission:cache-reset
-php artisan cache:clear
 
 echo "Starting supervisor..."
 /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
