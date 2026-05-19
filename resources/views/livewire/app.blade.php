@@ -271,7 +271,7 @@
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Música de foco
                                     </p>
-                                    <p class="text-xs text-slate-400 mt-0.5">Inicia automaticamente com a leitura</p>
+                                    <!-- <p class="text-xs text-slate-400 mt-0.5">Inicia automaticamente com a leitura</p> -->
                                 </div>
                                 <button @click="ttsAutoMusic = !ttsAutoMusic; updateMusicRealtime()"
                                     :class="ttsAutoMusic ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"

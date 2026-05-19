@@ -152,6 +152,7 @@ class BibleService
         $result = [
             'success' => true,
             'book_name' => $bookName,
+            'book_abbrev' => $parsed['book'] ?? '',
             'version' => $finalVersion,
             'chapters' => $allResults,
         ];

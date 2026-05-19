@@ -13,28 +13,49 @@ export const ttsHandler = () => ({
         // Vozes não precisam mais ser carregadas do navegador
     },
 
-    extractBibleText() {
-        if (!this.bibleData) { return ''; }
+    extractBibleBlocks() {
+        if (!this.bibleData) { return []; }
 
-        const parts = [];
-        const addTestament = (testament) => {
-            if (!testament || !testament.success) { return; }
+        const blocks = [];
+        const processTestament = (testament, testamentType) => {
+            if (!testament || !testament.success || !testament.chapters) { return; }
+
             testament.chapters.forEach(chapter => {
-                parts.push(`${testament.book_name} capítulo ${chapter.number}.`);
-                chapter.verses.forEach(verse => {
-                    if (this.ttsAnnounceVerses) {
-                        parts.push(`Versículo ${verse.number}. ${verse.text}`);
-                    } else {
-                        parts.push(verse.text);
-                    }
+                const parts = [];
+                parts.push(`${testament.book_name} o capítulo ${chapter.number}.`);
+
+                let startVerse = null;
+                let endVerse = null;
+
+                if (chapter.verses && chapter.verses.length > 0) {
+                    startVerse = chapter.verses[0].number;
+                    endVerse = chapter.verses[chapter.verses.length - 1].number;
+
+                    chapter.verses.forEach(verse => {
+                        if (this.ttsAnnounceVerses) {
+                            parts.push(`Versículo ${verse.number}. ${verse.text}`);
+                        } else {
+                            parts.push(verse.text);
+                        }
+                    });
+                }
+
+                blocks.push({
+                    testament: testamentType,
+                    book_name: testament.book_name,
+                    book_abbrev: testament.book_abbrev || testament.book_name.substring(0, 3).toLowerCase(),
+                    chapter: chapter.number,
+                    start_verse: startVerse,
+                    end_verse: endVerse,
+                    text: parts.join(' ')
                 });
             });
         };
 
-        addTestament(this.bibleData.old_testament);
-        addTestament(this.bibleData.new_testament);
+        processTestament(this.bibleData.old_testament, 'old');
+        processTestament(this.bibleData.new_testament, 'new');
 
-        return parts.join(' ');
+        return blocks;
     },
 
     async toggleTts() {
@@ -54,8 +75,8 @@ export const ttsHandler = () => ({
 
         if (this.isTtsLoading) return;
 
-        const text = this.extractBibleText();
-        if (!text) {
+        const blocks = this.extractBibleBlocks();
+        if (!blocks || blocks.length === 0) {
             console.warn('[TTS] Nenhum texto extraído do bibleData:', this.bibleData);
             return;
         }
@@ -78,7 +99,7 @@ export const ttsHandler = () => ({
                 },
                 body: JSON.stringify({
                     date: formattedDate,
-                    text: text // Envia o texto completo
+                    blocks: blocks // Envia os blocos estruturados
                 })
             });
 

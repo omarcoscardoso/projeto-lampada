@@ -19,22 +19,23 @@ class TtsController extends Controller
 
         $request->validate([
             'date' => 'required|string|regex:/^\d{2}\/\d{2}$/',
-            'text' => 'required|string|max:500000',
+            'blocks' => 'required|array',
+            'blocks.*.testament' => 'required|in:old,new',
+            'blocks.*.book_name' => 'required|string',
+            'blocks.*.book_abbrev' => 'required|string',
+            'blocks.*.chapter' => 'required|integer',
+            'blocks.*.start_verse' => 'nullable|integer',
+            'blocks.*.end_verse' => 'nullable|integer',
+            'blocks.*.text' => 'required|string|max:500000',
         ]);
 
-        $textInput = $request->input('text');
+        $blocksInput = $request->input('blocks');
         $dateInput = $request->input('date');
-        $executionTrace[] = "Texto recebido: " . mb_strlen($textInput) . " caracteres.";
+        $executionTrace[] = "Blocos recebidos: " . count($blocksInput);
 
         $dateParts = explode('/', $dateInput);
         $month = $dateParts[0];
         $day = $dateParts[1];
-
-        $fullText = trim($textInput);
-        $fullText = str_replace(["\r\n", "\r"], "\n", $fullText);
-        $fullText = preg_replace("/\n{2,}/", "\n\n", $fullText);
-
-        $fullTextHash = substr(md5($fullText), 0, 16);
 
         try {
             $bucketName = config('filesystems.disks.gcs.bucket');
@@ -52,83 +53,99 @@ class TtsController extends Controller
         $apiKey = config('services.google.tts_key') ?? env('GOOGLE_TTS_API_KEY');
         $executionTrace[] = "Google API Key carregada: " . ($apiKey ? 'SIM' : 'NÃO');
 
-        $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
-        $executionTrace[] = "Total de chunks: " . count($textChunks);
-
         $audioUrls = [];
         $anyGenerated = false;
 
-        foreach ($textChunks as $index => $chunk) {
-            // Geramos o hash do conteúdo do chunk para garantir unicidade
-            $chunkHash = md5($chunk);
+        foreach ($blocksInput as $blockIndex => $block) {
+            $testament = $block['testament'];
+            $bookAbbrev = $block['book_abbrev'];
+            $chapter = $block['chapter'];
+            $startVerse = $block['start_verse'] ?? null;
+            $endVerse = $block['end_verse'] ?? null;
 
-            // Organizamos os pedaços em uma subpasta 'chunks' para manter o diretório da data limpo
-            $chunkPath = "audio/{$month}/{$day}/chunks/{$chunkHash}.mp3";
+            $fullText = trim($block['text']);
+            $fullText = str_replace(["\r\n", "\r"], "\n", $fullText);
+            $fullText = preg_replace("/\n{2,}/", "\n\n", $fullText);
 
-            // Verifica se o áudio do chunk individual já existe
-            try {
-                $exists = $disk->exists($chunkPath);
-                $executionTrace[] = "Verificando chunk $index ($chunkHash): " . ($exists ? 'EXISTE' : 'NÃO EXISTE');
+            $textChunks = $this->chunkText($fullText, self::GOOGLE_TTS_MAX_CHARS);
+            $executionTrace[] = "Bloco {$blockIndex} ({$bookAbbrev} {$chapter}) dividido em " . count($textChunks) . " chunks.";
 
-                if ($exists) {
-                    $url = $disk->url($chunkPath);
-                    $audioUrls[] = $url;
-                    continue; // Pula a geração para este chunk
+            foreach ($textChunks as $index => $chunk) {
+                // Formatting the base name
+                if ($testament === 'new' && $startVerse !== null && $endVerse !== null) {
+                    $baseName = "{$bookAbbrev}_{$chapter}_{$startVerse}-{$endVerse}";
+                } else {
+                    $baseName = "{$bookAbbrev}_{$chapter}";
                 }
-            } catch (\Exception $e) {
-                $executionTrace[] = "Erro ao verificar GCS: " . $e->getMessage();
-            }
 
-            $url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' . $apiKey;
+                $suffix = count($textChunks) > 1 ? "_{$index}" : "";
+                $chunkPath = "audio/{$month}/{$day}/{$baseName}{$suffix}.mp3";
 
-            try {
-                $response = Http::post($url, [
-                    'input' => [
-                        'text' => $chunk,
-                    ],
-                    'voice' => [
-                        'languageCode' => 'pt-BR',
-                        'name' => 'pt-BR-Standard-E',
-                    ],
-                    'audioConfig' => [
-                        'audioEncoding' => 'MP3',
-                    ],
-                ]);
-            } catch (\Exception $e) {
-                $executionTrace[] = "Erro de rede Google API: " . $e->getMessage();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Falha de comunicação com o serviço de voz externo.',
-                    'trace' => $executionTrace
-                ], 500);
-            }
+                // Verifica se o áudio do chunk individual já existe
+                try {
+                    $exists = $disk->exists($chunkPath);
+                    $executionTrace[] = "Verificando chunk {$chunkPath}: " . ($exists ? 'EXISTE' : 'NÃO EXISTE');
 
-            if ($response->successful()) {
-                $audioContent = base64_decode($response->json('audioContent') ?? '');
-                $executionTrace[] = "Google TTS OK. Audio gerado: " . strlen($audioContent) . " bytes.";
-                $anyGenerated = true;
+                    if ($exists) {
+                        $url = $disk->url($chunkPath);
+                        $audioUrls[] = $url;
+                        continue; // Pula a geração para este chunk
+                    }
+                } catch (\Exception $e) {
+                    $executionTrace[] = "Erro ao verificar GCS para {$chunkPath}: " . $e->getMessage();
+                }
+
+                $url = 'https://texttospeech.googleapis.com/v1/text:synthesize?key=' . $apiKey;
 
                 try {
-                    $putResult = $disk->put($chunkPath, $audioContent, [
-                        'visibility' => 'public',
-                        'mimetype' => 'audio/mpeg',
-                        'metadata' => ['contentType' => 'audio/mpeg']
+                    $response = Http::post($url, [
+                        'input' => [
+                            'text' => $chunk,
+                        ],
+                        'voice' => [
+                            'languageCode' => 'pt-BR',
+                            'name' => 'pt-BR-Standard-E',
+                        ],
+                        'audioConfig' => [
+                            'audioEncoding' => 'MP3',
+                        ],
                     ]);
-
-                    $executionTrace[] = "Resultado do put no GCS: " . ($putResult ? 'SUCESSO' : 'FALHA');
-
-                    $url = $disk->url($chunkPath);
-                    $audioUrls[] = $url;
                 } catch (\Exception $e) {
-                    $executionTrace[] = "Exceção ao salvar no GCS: " . $e->getMessage();
-                    return response()->json(['success' => false, 'message' => 'Erro ao salvar no storage.', 'trace' => $executionTrace], 500);
+                    $executionTrace[] = "Erro de rede Google API: " . $e->getMessage();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Falha de comunicação com o serviço de voz externo.',
+                        'trace' => $executionTrace
+                    ], 500);
                 }
-            } else {
-                $executionTrace[] = "Erro API Google Status " . $response->status() . ": " . $response->body();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Erro ao gerar áudio para um dos trechos.',
-                ], $response->status() ?: 500);
+
+                if ($response->successful()) {
+                    $audioContent = base64_decode($response->json('audioContent') ?? '');
+                    $executionTrace[] = "Google TTS OK. Audio para {$chunkPath} gerado: " . strlen($audioContent) . " bytes.";
+                    $anyGenerated = true;
+
+                    try {
+                        $putResult = $disk->put($chunkPath, $audioContent, [
+                            'visibility' => 'public',
+                            'mimetype' => 'audio/mpeg',
+                            'metadata' => ['contentType' => 'audio/mpeg']
+                        ]);
+
+                        $executionTrace[] = "Resultado do put no GCS para {$chunkPath}: " . ($putResult ? 'SUCESSO' : 'FALHA');
+
+                        $url = $disk->url($chunkPath);
+                        $audioUrls[] = $url;
+                    } catch (\Exception $e) {
+                        $executionTrace[] = "Exceção ao salvar no GCS para {$chunkPath}: " . $e->getMessage();
+                        return response()->json(['success' => false, 'message' => 'Erro ao salvar no storage.', 'trace' => $executionTrace], 500);
+                    }
+                } else {
+                    $executionTrace[] = "Erro API Google Status " . $response->status() . ": " . $response->body();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Erro ao gerar áudio para um dos trechos.',
+                    ], $response->status() ?: 500);
+                }
             }
         }
 
