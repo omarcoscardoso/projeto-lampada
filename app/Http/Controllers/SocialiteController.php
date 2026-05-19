@@ -53,7 +53,7 @@ class SocialiteController extends Controller
             $user->assignRole('panel_user');
         }
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         return redirect()->intended(route('app'));
     }
