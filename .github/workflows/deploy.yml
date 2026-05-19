@@ -52,26 +52,26 @@ jobs:
             --add-cloudsql-instances ${{ vars.CLOUD_SQL_INSTANCE }}
             --allow-unauthenticated
           env_vars: |
-            APP_NAME=${{ vars.SERVICE_NAME }},
-            APP_ENV=${{ vars.APP_ENV }},
-            APP_URL=${{ vars.APP_URL }},
-            APP_DEBUG=true,
-            APP_LOCALE=pt_BR,
-            LOG_CHANNEL=stderr,
-            DB_CONNECTION=mysql,
-            DB_SOCKET=/cloudsql/${{ vars.CLOUD_SQL_INSTANCE }},
-            DB_DATABASE=${{ vars.DB_DATABASE }},
-            DB_USERNAME=${{ vars.DB_USERNAME }},
-            DB_PASSWORD=${{ secrets.DB_PASSWORD}},
-            APP_VERSION=${{ github.sha }},
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},
-            ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }},
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }},
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }},
-            GOOGLE_REDIRECT_URL=${{ vars.GOOGLE_REDIRECT_URL }},
-            GOOGLE_CLOUD_PROJECT_ID=${{ env.PROJECT_ID }},
-            GOOGLE_CLOUD_STORAGE_BUCKET=${{ vars.GOOGLE_CLOUD_STORAGE_BUCKET }},
-            GOOGLE_TTS_API_KEY=${{ secrets.GOOGLE_TTS_API_KEY }},
+            APP_NAME=${{ vars.SERVICE_NAME }}
+            APP_ENV=${{ vars.APP_ENV }}
+            APP_URL=${{ vars.APP_URL }}
+            APP_DEBUG=true
+            APP_LOCALE=pt_BR
+            LOG_CHANNEL=stderr
+            DB_CONNECTION=mysql
+            DB_SOCKET=/cloudsql/${{ vars.CLOUD_SQL_INSTANCE }}
+            DB_DATABASE=${{ vars.DB_DATABASE }}
+            DB_USERNAME=${{ vars.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD}}
+            APP_VERSION=${{ github.sha }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            ABIBLIA_DIGITAL_TOKEN=${{ secrets.ABIBLIA_DIGITAL_TOKEN }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_REDIRECT_URL=${{ vars.GOOGLE_REDIRECT_URL }}
+            GOOGLE_CLOUD_PROJECT_ID=${{ env.PROJECT_ID }}
+            GOOGLE_CLOUD_STORAGE_BUCKET=${{ vars.GOOGLE_CLOUD_STORAGE_BUCKET }}
+            GOOGLE_TTS_API_KEY=${{ secrets.GOOGLE_TTS_API_KEY }}
             GOOGLE_CLOUD_KEY_JSON=${{ secrets.GOOGLE_CLOUD_KEY_JSON }}
       - name: Exibir URL do Cloud Run
         run: echo "'Service URL:' ${{ steps.deploy.outputs.url }}"
