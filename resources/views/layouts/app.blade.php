@@ -39,12 +39,4 @@
     @livewireScriptConfig
 </body>
 
-<!-- Footer -->
-<footer class="bg-white py-16 border-t border-slate-100">
-    <div class="mx-auto max-w-7xl px-6 lg:px-8 text-center">
-        <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-10 w-auto mx-auto mb-8 opacity-20 grayscale" />
-        <p class="text-sm font-bold text-slate-400 tracking-tight">&copy; 2026 Igreja Presbiteriana Renovada de Viamão. Todos os direitos reservados.</p>
-    </div>
-</footer>
-
 </html>

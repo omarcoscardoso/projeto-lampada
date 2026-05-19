@@ -35,7 +35,13 @@
                 class="bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-sm border border-slate-100 dark:border-slate-700">
                 <div id="calendar-sidebar" class="vanilla-calendar light dark:dark !w-full"></div>
             </div>
-            <p class="text-center text-[10px] text-slate-400 mt-4">Lâmpada APP &copy; 2026</p>
+            <div class="mt-8 flex flex-col items-center gap-4 text-center px-4">
+                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-8 w-auto opacity-20 grayscale" />
+                <p class="text-[10px] font-bold text-slate-400 leading-tight">
+                    &copy; 2026 Igreja Presbiteriana Renovada de Viamão.
+                    <span class="block">Todos os direitos reservados.</span>
+                </p>
+            </div>
         </div>
     </aside>
 
@@ -197,7 +203,7 @@
                             <x-lucide-pause-circle class="w-5 h-5 animate-pulse" />
                         </template>
                         <template x-if="!isAutoScrolling">
-                            <x-lucide-play-circle class="w-5 h-5" />
+                            <x-lucide-scroll-text class="w-5 h-5" />
                         </template>
                         <span class="text-xs font-bold hidden sm:inline"
                             x-text="isAutoScrolling ? 'Pausar Rolagem' : 'Auto Rolagem'"></span>

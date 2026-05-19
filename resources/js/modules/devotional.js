@@ -30,7 +30,7 @@ export const devotionalApp = () => ({
             const scrollStep = () => {
                 if (!this.isAutoScrolling) return;
 
-                this.scrollPos += 0.15;
+                this.scrollPos += 0.25;
                 container.scrollTop = this.scrollPos;
 
                 if (Math.ceil(this.scrollPos + container.clientHeight) >= container.scrollHeight - 10) {

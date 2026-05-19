@@ -10,13 +10,13 @@ export const calendarApp = () => ({
     init() {
         // Define a data inicial como hoje
         this.currentDate = this.getFormattedDate(new Date());
-        
+
         // Inicializa as instâncias do calendário
         this.initCalendars();
-        
+
         // Busca os dados da data atual
         this.fetchDevotional(this.currentDate);
-        
+
         // Listener para fechar via evento global (útil para mobile)
         this.initMobileCalendarObserver();
     },
@@ -38,20 +38,14 @@ export const calendarApp = () => ({
         const component = this;
         // Seleciona o calendário do sidebar (desktop) e do modal (mobile)
         const calendarSelectors = ['#calendar-sidebar', '#calendar-modal'];
-        
+
         calendarSelectors.forEach(selector => {
             const el = document.querySelector(selector);
             if (el) {
                 const calendar = new Calendar(el, {
-                    settings: {
-                        lang: 'pt',
-                        selection: {
-                            day: 'single',
-                        },
-                        visibility: {
-                            theme: 'system',
-                        },
-                    },
+                    locale: 'pt-BR',
+                    selectionDayMode: 'single',
+                    visibilityThemeDetect: true,
                     onClickDate(self) {
                         const selectedDate = self.context.selectedDates[0];
                         if (selectedDate) {
@@ -76,7 +70,7 @@ export const calendarApp = () => ({
      * Busca os dados no servidor baseados na data selecionada
      */
     async fetchDevotional(date) {
-        this.calD= true;
+        this.calD = true;
         this.calError = null;
         this.devotionalData = null;
 
@@ -89,6 +83,11 @@ export const calendarApp = () => ({
 
             if (response.ok) {
                 this.devotionalData = data;
+
+                // Se o leitor bíblico estiver aberto, recarrega o texto para a nova data
+                if (this.showBibleModal) {
+                    this.openBibleReader();
+                }
             } else {
                 this.calError = data.message || 'Não há conteúdo para esta data.';
             }
@@ -96,7 +95,7 @@ export const calendarApp = () => ({
             console.error('Error fetching devotional:', e);
             this.calError = 'Erro de conexão ao carregar dados.';
         } finally {
-            this.calD= false;
+            this.calD = false;
         }
     },
 
