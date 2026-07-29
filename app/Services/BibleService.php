@@ -4,14 +4,12 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class BibleService
 {
     private string $baseUrl;
-
-    private string $token;
 
     private string $version;
 
@@ -109,8 +107,7 @@ class BibleService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.abibliadigital.base_url', 'https://www.abibliadigital.com.br/api');
-        $this->token = config('services.abibliadigital.token', '');
+        $this->baseUrl = config('services.abibliadigital.base_url', 'https://www.abibliadigital.api.br/api');
         $this->version = config('services.abibliadigital.default_version', 'nvi');
     }
 
@@ -119,7 +116,7 @@ class BibleService
      */
     public function getVersesByReference(string $reference): array
     {
-        $cacheKey = 'bible_ref_' . md5(Str::lower(trim($reference)));
+        $cacheKey = 'bible_ref_'.md5(Str::lower(trim($reference)));
 
         if ($cached = Cache::get($cacheKey)) {
             return $cached;
@@ -146,6 +143,7 @@ class BibleService
 
         if (empty($allResults)) {
             Log::error("[BibleService] Falha total ao buscar referência em produção: {$reference}. Verifique conectividade com a API externa ou limite de taxa (Rate Limit).");
+
             return ['success' => false, 'message' => "Não foi possível carregar os textos para {$reference}", 'chapters' => []];
         }
 
@@ -168,24 +166,14 @@ class BibleService
 
         foreach ($versionsToTry as $currentVersion) {
             $endpoint = "{$this->baseUrl}/verses/{$currentVersion}/{$book}/{$chapter}";
-            $request = Http::acceptJson()->withUserAgent('LampadaApp/1.0');
-
-            if ($this->token) {
-                $request = $request->withToken($this->token);
-            }
-
             $originalReference = $parsed['original_reference'] ?? 'unknown';
 
             try {
                 Log::debug("[BibleService] Tentando buscar {$book} {$chapter} ({$currentVersion}) para referência original: {$originalReference}");
-                $response = $request->get($endpoint);
-
-                if ($response->status() === 403 && $this->token) {
-                    Log::warning("[BibleService] 403 recebido com token para {$endpoint} (ref: {$originalReference}), tentando sem token.");
-                    $response = Http::acceptJson()->withUserAgent('LampadaApp/1.0')->get($endpoint);
-                }
+                $response = Http::acceptJson()->withUserAgent('LampadaApp/1.0')->get($endpoint);
             } catch (\Exception $e) {
-                Log::error("[BibleService] Erro de conexão ao acessar a API: " . $e->getMessage());
+                Log::error('[BibleService] Erro de conexão ao acessar a API: '.$e->getMessage());
+
                 continue;
             }
             if ($response->successful()) {
@@ -200,7 +188,7 @@ class BibleService
 
                         return $parsed['end_verse'] ? ($num >= $parsed['start_verse'] && $num <= $parsed['end_verse']) : ($num === $parsed['start_verse']);
                     }));
-                    Log::debug("[BibleService] Verses filtered for {$book} {$chapter} (ref: {$originalReference}): " . count($verses) . " out of " . $originalCount . " original verses.");
+                    Log::debug("[BibleService] Verses filtered for {$book} {$chapter} (ref: {$originalReference}): ".count($verses).' out of '.$originalCount.' original verses.');
                 }
                 if (empty($verses)) {
                     Log::warning("[BibleService] Nenhuma verso encontrado após filtragem para {$book} {$chapter} ({$currentVersion}) para referência original: {$originalReference}. API response successful, but verses array is empty or filtered out.");
@@ -214,10 +202,10 @@ class BibleService
                     'verses' => $verses,
                 ];
             } else {
-                Log::warning("[BibleService] Falha na requisição", [
+                Log::warning('[BibleService] Falha na requisição', [
                     'url' => $endpoint,
                     'status' => $response->status(),
-                    'body' => $response->body()
+                    'body' => $response->body(),
                 ]);
             }
         }
