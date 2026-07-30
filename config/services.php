@@ -36,7 +36,7 @@ return [
     ],
 
     'abibliadigital' => [
-        'base_url' => env('ABIBLIA_DIGITAL_BASE_URL', 'https://www.abibliadigital.api.br/api'),
+        'base_url' => env('ABIBLIA_DIGITAL_BASE_URL', 'https://abibliadigital.api.br/api'),
         'default_version' => env('ABIBLIA_DIGITAL_VERSION', 'nvi'),
     ],
 

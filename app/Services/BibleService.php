@@ -107,7 +107,7 @@ class BibleService
 
     public function __construct()
     {
-        $this->baseUrl = config('services.abibliadigital.base_url', 'https://www.abibliadigital.api.br/api');
+        $this->baseUrl = config('services.abibliadigital.base_url', 'https://abibliadigital.api.br/api');
         $this->version = config('services.abibliadigital.default_version', 'nvi');
     }
 

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Http;
 
 it('fetches verses from the new abibliadigital.api.br endpoint without token', function () {
     Http::fake([
-        'https://www.abibliadigital.api.br/api/verses/nvi/gn/1' => Http::response([
+        'https://abibliadigital.api.br/api/verses/nvi/gn/1' => Http::response([
             'book' => [
                 'name' => 'Gênesis',
                 'version' => 'nvi',
@@ -30,14 +30,14 @@ it('fetches verses from the new abibliadigital.api.br endpoint without token', f
     expect($result['chapters'][0]['verses'])->toHaveCount(2);
 
     Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'https://www.abibliadigital.api.br/api/verses/nvi/gn/1')
+        return str_contains($request->url(), 'https://abibliadigital.api.br/api/verses/nvi/gn/1')
             && ! $request->hasHeader('Authorization');
     });
 });
 
 it('filters specific verses range correctly when single chapter is requested', function () {
     Http::fake([
-        'https://www.abibliadigital.api.br/api/verses/nvi/gn/1' => Http::response([
+        'https://abibliadigital.api.br/api/verses/nvi/gn/1' => Http::response([
             'book' => [
                 'name' => 'Gênesis',
                 'version' => 'nvi',
