@@ -1,8 +1,8 @@
 <p align="center">
-  <h1 align="center">💡 Projeto Lâmpada</h1>
-  <p align="center">
-    <i>"Lâmpada para os meus pés é a tua palavra e luz para o meu caminho." — Salmos 119:105</i>
-  </p>
+  <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Projeto Lâmpada" width="280">
+</p>
+<p align="center">
+  <i>"Lâmpada para os meus pés é a tua palavra e luz para o meu caminho." — Salmos 119:105</i>
 </p>
 
 <p align="center">
