@@ -39,6 +39,13 @@
             <div
                 class="bg-white dark:bg-slate-800 rounded-3xl p-2 shadow-sm border border-slate-100 dark:border-slate-700">
                 <div id="calendar-sidebar" class="vanilla-calendar light dark:dark !w-full"></div>
+                <div x-show="!isToday()" x-cloak x-transition class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <button @click="goToToday"
+                        class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-xs rounded-2xl transition-all border border-amber-500/20">
+                        <x-lucide-calendar-days class="w-4 h-4" />
+                        <span>Ir para Hoje</span>
+                    </button>
+                </div>
             </div>
             <div class="mt-8 flex flex-col items-center gap-4 text-center px-4">
                 <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-8 w-auto opacity-20 grayscale" />
@@ -565,6 +572,13 @@
             </div>
             <div class="p-4">
                 <div id="calendar-modal" class="vanilla-calendar light dark:dark !w-full"></div>
+                <div x-show="!isToday()" x-cloak x-transition class="mt-3">
+                    <button @click="goToToday"
+                        class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-amber-500/20 transition-all">
+                        <x-lucide-calendar-days class="w-5 h-5" />
+                        <span>Ir para Hoje</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
