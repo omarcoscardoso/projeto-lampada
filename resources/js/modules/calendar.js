@@ -6,6 +6,7 @@ export const calendarApp = () => ({
     devotionalData: null,
     calDevotionalLoading: false,
     calError: null,
+    calendarInstances: [],
 
     init() {
         // Define a data inicial como hoje
@@ -32,12 +33,50 @@ export const calendarApp = () => ({
     },
 
     /**
+     * Retorna true se a data exibida for a data de hoje
+     */
+    isToday() {
+        if (!this.currentDate) return true;
+        return this.currentDate === this.getFormattedDate(new Date());
+    },
+
+    /**
+     * Leva o usuário para o dia de hoje
+     */
+    goToToday() {
+        const todayStr = this.getFormattedDate(new Date());
+        if (this.currentDate !== todayStr) {
+            this.currentDate = todayStr;
+            this.fetchDevotional(todayStr);
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            this.calendarInstances.forEach(calendar => {
+                if (calendar) {
+                    calendar.selectedDates = [todayStr];
+                    calendar.selectedYear = year;
+                    calendar.selectedMonth = month;
+                    calendar.update({
+                        dates: true,
+                        year: true,
+                        month: true,
+                    });
+                }
+            });
+        }
+        this.showCalendar = false;
+    },
+
+    /**
      * Configura e renderiza o Vanilla Calendar Pro
      */
     initCalendars() {
         const component = this;
         // Seleciona o calendário do sidebar (desktop) e do modal (mobile)
         const calendarSelectors = ['#calendar-sidebar', '#calendar-modal'];
+        this.calendarInstances = [];
 
         calendarSelectors.forEach(selector => {
             const el = document.querySelector(selector);
@@ -56,6 +95,7 @@ export const calendarApp = () => ({
                     },
                 });
                 calendar.init();
+                component.calendarInstances.push(calendar);
             }
         });
     },
