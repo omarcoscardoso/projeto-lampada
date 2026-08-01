@@ -7,7 +7,7 @@
             <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada"
                 class="h-10 w-auto mb-10">
             <nav class="space-y-2">
-                <a href="/"
+                <a href="{{ route('app') }}"
                     class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold transition-all">
                     <x-lucide-home class="w-5 h-5" />
                     <span>Leitura do Dia</span>
@@ -17,7 +17,7 @@
                     <x-lucide-siren class="w-5 h-5" />
                     <span>Lampião AI</span>
                 </button>
-                <a href="https://iprviamao.com.br/lampada/" target="_blank"
+                <a href="{{ route('landing', ['sobre' => 1]) }}" target="_self"
                     class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
                     <x-lucide-info class="w-5 h-5" />
                     <span>Sobre</span>
@@ -26,6 +26,11 @@
                     class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
                     <x-lucide-layout-dashboard class="w-5 h-5" />
                     <span>Painel Admin</span>
+                </a>
+                <a href="{{ route('logout') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl transition-all font-medium">
+                    <x-lucide-log-out class="w-5 h-5" />
+                    <span>Sair</span>
                 </a>
             </nav>
         </div>
@@ -461,7 +466,7 @@
     <nav
         class="lg:hidden fixed bottom-0 left-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-safe">
         <div class="flex items-center justify-between h-16 px-4">
-            <a href="/" class="flex flex-col items-center justify-center flex-1 text-amber-600 dark:text-amber-500">
+            <a href="{{ route('app') }}" class="flex flex-col items-center justify-center flex-1 text-amber-600 dark:text-amber-500">
                 <x-lucide-home class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Início</span>
             </a>
@@ -469,7 +474,7 @@
                 <x-lucide-siren class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Lampião</span>
             </button>
-            <a href="https://iprviamao.com.br/lampada/" target="_blank"
+            <a href="{{ route('landing', ['sobre' => 1]) }}" target="_self"
                 class="flex flex-col items-center justify-center flex-1 text-slate-400">
                 <x-lucide-info class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Sobre</span>
@@ -477,6 +482,10 @@
             <a href="/admin" class="flex flex-col items-center justify-center flex-1 text-slate-400">
                 <x-lucide-layout-dashboard class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Admin</span>
+            </a>
+            <a href="{{ route('logout') }}" class="flex flex-col items-center justify-center flex-1 text-rose-500">
+                <x-lucide-log-out class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Sair</span>
             </a>
         </div>
     </nav>
