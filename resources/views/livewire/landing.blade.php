@@ -8,9 +8,15 @@
                 </a>
             </div>
             <div class="lg:flex lg:flex-1 lg:justify-end">
-                <a href="{{ route('auth.google.redirect') }}" class="text-sm font-black text-slate-900 flex items-center gap-2 hover:text-amber-600 transition-colors group">
-                    Entrar <span aria-hidden="true" class="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                </a>
+                @auth
+                    <a href="{{ route('app') }}" class="text-sm font-black text-slate-900 flex items-center gap-2 hover:text-amber-600 transition-colors group">
+                        Ir para o App <span aria-hidden="true" class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </a>
+                @else
+                    <a href="{{ route('auth.google.redirect') }}" class="text-sm font-black text-slate-900 flex items-center gap-2 hover:text-amber-600 transition-colors group">
+                        Entrar <span aria-hidden="true" class="group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </a>
+                @endauth
             </div>
         </nav>
     </header>
@@ -37,7 +43,11 @@
                 <p class="text-slate-500 mb-6 text-xl italic">"Lâmpada para os meus pés é tua palavra e luz, para o meu caminho" (Salmo 119:105).</p>
                 <p class="text-slate-600 mb-12 text-xl leading-relaxed">Una-se a nós na jornada de ler a Bíblia completa em um ano, com foco na compreensão profunda e no crescimento espiritual.</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-6">
-                    <a href="{{ route('auth.google.redirect') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Começar Agora</a>
+                    @auth
+                        <a href="{{ route('app') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Ir para o App</a>
+                    @else
+                        <a href="{{ route('auth.google.redirect') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Começar Agora</a>
+                    @endauth
                     <a href="#oq-e" class="rounded-full bg-white border-2 border-slate-200 px-12 py-5 text-xl font-black text-slate-900 hover:bg-slate-50 transition-all hover:scale-105 active:scale-95 text-center">Saiba Mais</a>
                 </div>
             </div>
@@ -211,9 +221,15 @@
             <h2 class="text-5xl sm:text-6xl font-black tracking-tighter mb-8 leading-tight">Pronto para começar?</h2>
             <p class="text-blue-100/90 mb-12 text-xl font-medium leading-relaxed">Comece hoje sua jornada de amadurecimento espiritual com a Palavra.</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="{{ route('auth.google.redirect') }}" class="w-full sm:w-auto bg-amber-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-amber-400 shadow-2xl shadow-amber-500/20 text-xl">
-                    Entrar Agora
-                </a>
+                @auth
+                    <a href="{{ route('app') }}" class="w-full sm:w-auto bg-amber-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-amber-400 shadow-2xl shadow-amber-500/20 text-xl">
+                        Ir para o App
+                    </a>
+                @else
+                    <a href="{{ route('auth.google.redirect') }}" class="w-full sm:w-auto bg-amber-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-amber-400 shadow-2xl shadow-amber-500/20 text-xl">
+                        Entrar Agora
+                    </a>
+                @endauth
                 <a href="https://chat.whatsapp.com/KX8S51kTBg4Klc7Lc9gmCE" class="w-full sm:w-auto bg-green-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-green-400 shadow-2xl shadow-amber-500/20 text-xl" target="_blank">
                     <x-lucide-message-circle class="w-6 h-6 text-white" />
                     Grupo de leitura

@@ -7,6 +7,7 @@ use App\Http\Controllers\DevotionalController;
 use App\Http\Controllers\SocialiteController;
 use App\Livewire\App;
 use App\Livewire\Landing;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Landing::class)->name('landing');
@@ -19,3 +20,11 @@ Route::post('/api/tts', [TtsController::class, 'generate'])->name('api.tts.gener
 
 Route::get('/auth/google/redirect', [SocialiteController::class, 'redirect'])->name('auth.google.redirect');
 Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->name('auth.google.callback');
+
+Route::match(['get', 'post'], '/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect('/');
+})->name('logout');
