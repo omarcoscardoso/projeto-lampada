@@ -73,6 +73,8 @@ RUN mkdir -p /tmp/livewire \
     && chown -R www-data:www-data /tmp
 RUN mkdir -p /var/lib/nginx/tmp/client_body \
     && chown -R www-data:www-data /var/lib/nginx
+RUN mkdir -p /var/run \
+    && chown -R www-data:www-data /var/run
 
 EXPOSE 8080
 
