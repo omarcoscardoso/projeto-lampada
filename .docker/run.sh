@@ -12,6 +12,7 @@ chmod -R 775 /var/www/html/bootstrap/cache
 echo "Preparing PHP-FPM socket directory..."
 mkdir -p /var/run
 chown -R www-data:www-data /var/run
+chmod 777 /var/run
 
 echo "Running migrations..."
 php artisan migrate --force --no-interaction
