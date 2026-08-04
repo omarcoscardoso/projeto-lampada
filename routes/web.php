@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Landing::class)->name('landing');
+Route::view('/politica-de-privacidade', 'privacy')->name('privacy');
+Route::view('/termos-de-servico', 'terms')->name('terms');
 Route::get('/app', App::class)->name('app')->middleware('auth');
 Route::get('/api/devotionals/{date}', DevotionalController::class)->name('api.devotionals.show');
 Route::post('/api/ai/chat', AiChatController::class)->name('api.ai.chat');
