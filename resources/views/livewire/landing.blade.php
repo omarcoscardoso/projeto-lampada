@@ -67,16 +67,27 @@
 
                 <!-- Right: Content -->
                 <div class="text-center lg:text-left space-y-8 order-1 lg:order-2">
-                    <div class="w-16 h-16 bg-slate-900/5 rounded-2xl flex items-center justify-center mx-auto lg:mx-0">
-                        <x-lucide-help-circle class="text-slate-900 w-8 h-8" />
+                    <div class="w-16 h-16 bg-amber-600/10 rounded-2xl flex items-center justify-center mx-auto lg:mx-0">
+                        <x-lucide-help-circle class="text-amber-600 w-8 h-8" />
                     </div>
                     <h2 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-tight">O que é o <span class="text-amber-600">Projeto Lâmpada?</span></h2>
                     <p class="text-slate-600 text-xl leading-relaxed font-medium">
-                        O Projeto Lâmpada é uma iniciativa de leitura bíblica dirigida, fundamentada no princípio de que a Bíblia é a autoridade suprema e suficiente para a vida do cristão.
+                        O <strong>Projeto Lâmpada</strong> é uma aplicação devocional de leitura bíblica dirigida, desenvolvida pela Igreja Presbiteriana Renovada de Viamão. O aplicativo foi criado para ajudar cristãos a lerem toda a Bíblia em um ano através do Método de Leitura em Paralelo (Antigo e Novo Testamento), acompanhado de recursos devocionais, áudio dos capítulos e suporte teológico do assistente Lampião.
                     </p>
                     <p class="text-slate-600 text-xl leading-relaxed font-medium">
-                        Nosio objetivo não é apenas o cumprimento de uma meta de leitura, mas a formação de uma mente bíblica e um coração devoto através da exposição constante à Palavra de Deus, do Gênesis ao Apocalipse.
+                        Nosso objetivo não é apenas o cumprimento de uma meta de leitura, mas a formação de uma mente bíblica e um coração devoto através da exposição constante à Palavra de Deus, do Gênesis ao Apocalipse.
                     </p>
+
+                    <!-- Bloco de Destaque GCP / Finalidade & Autenticação -->
+                    <div class="bg-amber-50/80 rounded-3xl p-6 border border-amber-200/60 space-y-3 text-left">
+                        <div class="flex items-center gap-2 font-bold text-amber-900 text-base">
+                            <x-lucide-shield-check class="w-5 h-5 text-amber-600 shrink-0" />
+                            <span>Finalidade do App &amp; Autenticação Segura</span>
+                        </div>
+                        <p class="text-slate-700 text-sm leading-relaxed">
+                            O <strong>Projeto Lâmpada</strong> utiliza a autenticação via Conta do Google estritamente para identificar o usuário, criar seu perfil e sincronizar seu histórico pessoal de leitura bíblica diária em tempo real entre seus dispositivos. Nossos termos garantem que seus dados nunca serão vendidos ou compartilhados com terceiros.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

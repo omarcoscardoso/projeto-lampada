@@ -16,8 +16,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 
-    <!-- <title>Leitura Bíblica Diária - {{ config('app.name', 'Lâmpada') }}</title> -->
-    <title>{{ $title ?? config('app.name', 'Lâmpada') }}</title>
+    <title>{{ $title ?? config('app.name', 'Projeto Lâmpada') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
