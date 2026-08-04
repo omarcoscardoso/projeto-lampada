@@ -23,3 +23,12 @@ test('landing page contains links to legal pages', function () {
     $response->assertSee(route('privacy'));
     $response->assertSee(route('terms'));
 });
+
+test('landing page contains app name and google oauth purpose explanation', function () {
+    $response = $this->get('/');
+
+    $response->assertStatus(200);
+    $response->assertSee('Projeto Lâmpada');
+    $response->assertSee('Finalidade do App &amp; Autenticação Segura', false);
+    $response->assertSee('sincronizar seu histórico pessoal de leitura bíblica diária');
+});
