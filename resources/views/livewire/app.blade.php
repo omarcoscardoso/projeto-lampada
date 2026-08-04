@@ -47,10 +47,15 @@
                     </button>
                 </div>
             </div>
-            <div class="mt-8 flex flex-col items-center gap-4 text-center px-4">
+            <div class="mt-6 flex flex-col items-center gap-2 text-center px-4">
                 <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-8 w-auto opacity-20 grayscale" />
+                <div class="flex items-center gap-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    <a href="{{ route('privacy') }}" class="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">Privacidade</a>
+                    <span>&bull;</span>
+                    <a href="{{ route('terms') }}" class="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">Termos</a>
+                </div>
                 <p class="text-[10px] font-bold text-slate-400 leading-tight">
-                    &copy; 2026 Igreja Presbiteriana Renovada de Viamão.
+                    &copy; {{ date('Y') }} Igreja Presbiteriana Renovada de Viamão.
                     <span class="block">Todos os direitos reservados.</span>
                 </p>
             </div>

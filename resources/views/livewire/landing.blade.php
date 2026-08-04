@@ -237,4 +237,18 @@
             </div>
         </div>
     </section>
+
+    <!-- 7. Rodapé (Footer) -->
+    <footer class="bg-slate-950 border-t border-slate-800 text-slate-400 py-12 px-6 md:px-12">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm font-medium">
+            <div class="flex items-center gap-3">
+                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-7 w-auto opacity-80" />
+                <span>&copy; {{ date('Y') }} Igreja Presbiteriana Renovada de Viamão. Todos os direitos reservados.</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-6">
+                <a href="{{ route('privacy') }}" class="hover:text-amber-400 transition-colors">Política de Privacidade</a>
+                <a href="{{ route('terms') }}" class="hover:text-amber-400 transition-colors">Termos de Serviço</a>
+            </div>
+        </div>
+    </footer>
 </div>
