@@ -20,6 +20,9 @@ export const calendarApp = () => ({
 
         // Listener para fechar via evento global (útil para mobile)
         this.initMobileCalendarObserver();
+
+        // Inicializa a busca dos dados de gamificação
+        this.initGamification();
     },
 
     /**
@@ -67,6 +70,7 @@ export const calendarApp = () => ({
             });
         }
         this.showCalendar = false;
+        this.applyCalendarHighlights();
     },
 
     /**
@@ -93,11 +97,19 @@ export const calendarApp = () => ({
                             component.showCalendar = false;
                         }
                     },
+                    onClickMonth() {
+                        setTimeout(() => component.applyCalendarHighlights(), 100);
+                    },
+                    onClickYear() {
+                        setTimeout(() => component.applyCalendarHighlights(), 100);
+                    },
                 });
                 calendar.init();
                 component.calendarInstances.push(calendar);
             }
         });
+
+        setTimeout(() => component.applyCalendarHighlights(), 100);
     },
 
     initMobileCalendarObserver() {

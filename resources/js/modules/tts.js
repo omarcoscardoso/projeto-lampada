@@ -138,6 +138,7 @@ export const ttsHandler = () => ({
 
     _playCurrentAudioChunk() {
         if (this._currentAudioIndex >= this._audioUrls.length) {
+            this.markReadingComplete();
             this.stopTts(); // Fim da playlist
             return;
         }

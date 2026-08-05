@@ -35,11 +35,21 @@ export const devotionalApp = () => ({
 
                 if (Math.ceil(this.scrollPos + container.clientHeight) >= container.scrollHeight - 10) {
                     this.isAutoScrolling = false;
+                    this.markReadingComplete();
                     return;
                 }
                 requestAnimationFrame(scrollStep);
             };
             requestAnimationFrame(scrollStep);
+        }
+    },
+
+    checkBibleScrollEnd() {
+        const container = this.$refs.bibleContainer;
+        if (!container) return;
+
+        if (Math.ceil(container.scrollTop + container.clientHeight) >= container.scrollHeight - 40) {
+            this.markReadingComplete();
         }
     },
 

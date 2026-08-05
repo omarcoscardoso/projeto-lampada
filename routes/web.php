@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\Api\GamificationController;
 use App\Http\Controllers\Api\TtsController;
 use App\Http\Controllers\BibleController;
 use App\Http\Controllers\DevotionalController;
@@ -19,6 +20,11 @@ Route::post('/api/ai/chat', AiChatController::class)->name('api.ai.chat');
 Route::get('/api/bible/read', BibleController::class)->name('api.bible.read');
 
 Route::post('/api/tts', [TtsController::class, 'generate'])->name('api.tts.generate');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/api/user/gamification', [GamificationController::class, 'index'])->name('api.gamification.index');
+    Route::post('/api/user/gamification/complete', [GamificationController::class, 'complete'])->name('api.gamification.complete');
+});
 
 Route::get('/auth/google/redirect', [SocialiteController::class, 'redirect'])->name('auth.google.redirect');
 Route::get('/auth/google/callback', [SocialiteController::class, 'callback'])->name('auth.google.callback');
