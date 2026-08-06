@@ -22,11 +22,18 @@
                     <x-lucide-info class="w-4 h-4" />
                     <span>Sobre</span>
                 </a>
-                <a href="/admin"
-                    class="flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
-                    <x-lucide-layout-dashboard class="w-4 h-4" />
-                    <span>Painel Admin</span>
-                </a>
+                <button @click="openProfileModal('stats')"
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
+                    <x-lucide-user-circle class="w-4 h-4 text-amber-500" />
+                    <span>Meu Perfil</span>
+                </button>
+                @if (auth()->user()?->hasAnyRole(['super_admin', 'admin']))
+                    <a href="/admin"
+                        class="flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
+                        <x-lucide-layout-dashboard class="w-4 h-4" />
+                        <span>Painel Admin</span>
+                    </a>
+                @endif
                 <a href="{{ route('logout') }}"
                     class="flex items-center gap-3 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl transition-all font-medium text-sm">
                     <x-lucide-log-out class="w-4 h-4" />
@@ -131,8 +138,6 @@
                 <div class="flex items-center gap-3">
                     <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp"
                         alt="Logo Lâmpada" class="h-8 w-auto">
-                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-200/50 dark:border-slate-700/50"
-                        x-text="displayShortDate"></span>
                 </div>
                 <button @click="showCalendar = true"
                     class="p-2 text-amber-600 dark:text-amber-500 rounded-full bg-amber-50 dark:bg-amber-900/30">
@@ -621,10 +626,16 @@
                 <x-lucide-info class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Sobre</span>
             </a>
-            <a href="/admin" class="flex flex-col items-center justify-center flex-1 text-slate-400">
-                <x-lucide-layout-dashboard class="w-6 h-6 mb-1" />
-                <span class="text-[10px] font-medium">Admin</span>
-            </a>
+            <button @click="openProfileModal('stats')" class="flex flex-col items-center justify-center flex-1 text-amber-500 font-bold">
+                <x-lucide-user-circle class="w-6 h-6 mb-1" />
+                <span class="text-[10px] font-medium">Perfil</span>
+            </button>
+            @if (auth()->user()?->hasAnyRole(['super_admin', 'admin']))
+                <a href="/admin" class="flex flex-col items-center justify-center flex-1 text-slate-400">
+                    <x-lucide-layout-dashboard class="w-6 h-6 mb-1" />
+                    <span class="text-[10px] font-medium">Admin</span>
+                </a>
+            @endif
             <a href="{{ route('logout') }}" class="flex flex-col items-center justify-center flex-1 text-rose-500">
                 <x-lucide-log-out class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Sair</span>
@@ -718,5 +729,279 @@
         </div>
     </div>
 
+    <!-- Modal do Perfil do Usuário -->
+    <div x-show="showProfileModal" class="fixed inset-0 z-[130] flex items-center justify-center p-3 sm:p-6" x-cloak>
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-md transition-opacity"
+            x-show="showProfileModal"
+            x-transition:enter="ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="closeProfileModal"></div>
+
+        <!-- Modal Container -->
+        <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-[32px] sm:rounded-[40px] shadow-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden"
+            x-show="showProfileModal"
+            x-transition:enter="ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            x-transition:leave="ease-in duration-200 transform"
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+            x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                <div class="flex items-center gap-3">
+                    <img :src="profileData?.user?.avatar || 'https://ui-avatars.com/api/?name=User&background=f59e0b&color=ffffff'"
+                        alt="Avatar" class="w-12 h-12 rounded-2xl object-cover border-2 border-amber-500 shadow-md">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-slate-900 dark:text-white leading-tight"
+                            x-text="profileData?.user?.name || '{{ auth()->user()?->name }}'"></h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium"
+                            x-text="profileData?.user?.email || '{{ auth()->user()?->email }}'"></p>
+                    </div>
+                </div>
+                <button @click="closeProfileModal"
+                    class="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl transition-all">
+                    <x-lucide-x class="w-5 h-5" />
+                </button>
+            </div>
+
+            <!-- Modal Tabs Nav -->
+            <div class="flex border-b border-slate-100 dark:border-slate-800 px-6 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-auto scrollbar-hide">
+                <button @click="profileTab = 'stats'"
+                    :class="profileTab === 'stats' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
+                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
+                    <x-lucide-bar-chart-3 class="w-4 h-4" />
+                    <span>Estatísticas & Ofensivas</span>
+                </button>
+
+                <button @click="profileTab = 'info'"
+                    :class="profileTab === 'info' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
+                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
+                    <x-lucide-user class="w-4 h-4" />
+                    <span>Meus Dados</span>
+                </button>
+
+                <button @click="profileTab = 'password'"
+                    :class="profileTab === 'password' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
+                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
+                    <x-lucide-key-round class="w-4 h-4" />
+                    <span>Trocar Senha</span>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-6 scrollbar-hide space-y-6">
+
+                <!-- ABA 1: ESTATÍSTICAS & OFENSIVAS -->
+                <div x-show="profileTab === 'stats'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1">
+                    <!-- Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                        <!-- Ofensiva Atual -->
+                        <div class="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 p-4 rounded-3xl border border-rose-100 dark:border-rose-900/30">
+                            <div class="flex items-center gap-2 mb-1">
+                                <x-lucide-flame class="w-4 h-4 text-rose-500 animate-pulse" />
+                                <span class="text-[11px] font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wide">Ofensiva Atual</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-900 dark:text-white"
+                                x-text="(gamificationData?.current_streak ?? 0) + ' dias'"></p>
+                        </div>
+
+                        <!-- Maior Ofensiva -->
+                        <div class="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 p-4 rounded-3xl border border-amber-100 dark:border-amber-900/30">
+                            <div class="flex items-center gap-2 mb-1">
+                                <x-lucide-zap class="w-4 h-4 text-amber-500" />
+                                <span class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Maior Ofensiva</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-900 dark:text-white"
+                                x-text="(gamificationData?.best_streak ?? 0) + ' dias'"></p>
+                        </div>
+
+                        <!-- Total Lidos -->
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 p-4 rounded-3xl border border-emerald-100 dark:border-emerald-900/30">
+                            <div class="flex items-center gap-2 mb-1">
+                                <x-lucide-book-check class="w-4 h-4 text-emerald-500" />
+                                <span class="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">Total Lidos</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-900 dark:text-white"
+                                x-text="(gamificationData?.total_completed ?? 0) + ' dias'"></p>
+                        </div>
+
+                        <!-- Progresso Anual -->
+                        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/20 p-4 rounded-3xl border border-indigo-100 dark:border-indigo-900/30">
+                            <div class="flex items-center gap-2 mb-1">
+                                <x-lucide-trophy class="w-4 h-4 text-indigo-500" />
+                                <span class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wide">Ano Atual</span>
+                            </div>
+                            <p class="text-2xl font-black text-slate-900 dark:text-white"
+                                x-text="(gamificationData?.annual_percentage ?? 0) + '%'"></p>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico Mensal de Leitura -->
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Gráfico de Histórico Mensal</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Dias lidos concluídos em cada mês do ano</p>
+                            </div>
+                            <span class="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                                {{ date('Y') }}
+                            </span>
+                        </div>
+
+                        <!-- Gráfico de Colunas em HTML5/CSS -->
+                        <div class="h-44 flex items-end justify-between gap-1.5 pt-6 pb-2 px-1">
+                            <template x-for="item in (gamificationData?.monthly_stats ?? [])" :key="item.month_num">
+                                <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
+                                    <!-- Tooltip Hover -->
+                                    <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap shadow-lg z-10"
+                                        x-text="item.count + ' dias'"></div>
+
+                                    <!-- Valor Acima da Barra -->
+                                    <span class="text-[10px] font-extrabold text-slate-600 dark:text-slate-400"
+                                        x-text="item.count > 0 ? item.count : ''"></span>
+
+                                    <!-- Barra Proporcional (meta 31 dias por mes) -->
+                                    <div class="w-full rounded-t-xl transition-all duration-500"
+                                        :class="{
+                                            'bg-gradient-to-t from-amber-500 to-amber-400 shadow-md shadow-amber-500/20': item.is_current && item.count > 0,
+                                            'bg-gradient-to-t from-emerald-500 to-emerald-400': !item.is_current && item.count > 0,
+                                            'bg-slate-200 dark:bg-slate-700': item.count === 0,
+                                            'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-slate-900': item.is_current
+                                        }"
+                                        :style="'height: ' + Math.max(item.count > 0 ? (item.count / 31 * 100) : 6, 6) + '%'"></div>
+
+                                    <!-- Rótulo do Mês -->
+                                    <span class="text-[11px] font-bold transition-colors"
+                                        :class="item.is_current ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+                                        x-text="item.month"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABA 2: MEUS DADOS -->
+                <div x-show="profileTab === 'info'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1">
+                    <form @submit.prevent="updateProfileInfo" class="space-y-4">
+                        <div x-show="profileMessage" x-cloak
+                            class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <x-lucide-check-circle class="w-4 h-4 shrink-0" />
+                            <span x-text="profileMessage"></span>
+                        </div>
+
+                        <div x-show="profileError" x-cloak
+                            class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                            <x-lucide-alert-circle class="w-4 h-4 shrink-0" />
+                            <span x-text="profileError"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                Nome Completo
+                            </label>
+                            <input type="text" x-model="profileForm.name" required
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                Endereço de E-mail
+                            </label>
+                            <div class="relative">
+                                <input type="email" :value="profileData?.user?.email" disabled
+                                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 font-medium cursor-not-allowed">
+                                <template x-if="profileData?.user?.is_google">
+                                    <span class="absolute right-3 top-3 text-[10px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
+                                        Google
+                                    </span>
+                                </template>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-1">O e-mail é utilizado para identificação no sistema.</p>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" :disabled="profileSubmitting"
+                                class="w-full flex items-center justify-center gap-2 py-3 px-6 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50">
+                                <template x-if="profileSubmitting">
+                                    <x-lucide-loader class="w-4 h-4 animate-spin" />
+                                </template>
+                                <span>Salvar Alterações</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ABA 3: TROCAR SENHA -->
+                <div x-show="profileTab === 'password'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1">
+                    <form @submit.prevent="updateUserPassword" class="space-y-4">
+                        <div x-show="passwordMessage" x-cloak
+                            class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <x-lucide-check-circle class="w-4 h-4 shrink-0" />
+                            <span x-text="passwordMessage"></span>
+                        </div>
+
+                        <div x-show="passwordError" x-cloak
+                            class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                            <x-lucide-alert-circle class="w-4 h-4 shrink-0" />
+                            <span x-text="passwordError"></span>
+                        </div>
+
+                        <!-- Senha Atual (exibe se o usuário possuir senha definida) -->
+                        <template x-if="profileData?.user?.has_password">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                    Senha Atual
+                                </label>
+                                <input type="password" x-model="passwordForm.current_password" required autocomplete="current-password"
+                                    placeholder="Digite sua senha atual"
+                                    class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                                <template x-if="passwordFieldErrors?.current_password">
+                                    <p class="text-[11px] text-rose-500 mt-1" x-text="passwordFieldErrors.current_password[0]"></p>
+                                </template>
+                            </div>
+                        </template>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                Nova Senha
+                            </label>
+                            <input type="password" x-model="passwordForm.password" required minlength="8" autocomplete="new-password"
+                                placeholder="No mínimo 8 caracteres"
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                            <template x-if="passwordFieldErrors?.password">
+                                <p class="text-[11px] text-rose-500 mt-1" x-text="passwordFieldErrors.password[0]"></p>
+                            </template>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                                Confirmar Nova Senha
+                            </label>
+                            <input type="password" x-model="passwordForm.password_confirmation" required minlength="8" autocomplete="new-password"
+                                placeholder="Repita a nova senha"
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" :disabled="passwordSubmitting"
+                                class="w-full flex items-center justify-center gap-2 py-3 px-6 bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50">
+                                <template x-if="passwordSubmitting">
+                                    <x-lucide-loader class="w-4 h-4 animate-spin" />
+                                </template>
+                                <span>Alterar Senha</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </div>

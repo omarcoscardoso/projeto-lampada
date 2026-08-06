@@ -1,7 +1,10 @@
 <?php
 
+use App\Filament\Pages\Auth\Login;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertGuest;
@@ -40,4 +43,47 @@ test('user can log out via logout route', function () {
         ->assertRedirect('/');
 
     assertGuest();
+});
+
+test('regular user with panel_user role can log in and is redirected to app', function () {
+    $role = Role::firstOrCreate(['name' => 'panel_user', 'guard_name' => 'web']);
+
+    $user = User::factory()->create([
+        'email' => 'teste.regular@example.com',
+        'password' => 'password123',
+    ]);
+    $user->assignRole($role);
+
+    Livewire::test(Login::class)
+        ->fillForm([
+            'email' => 'teste.regular@example.com',
+            'password' => 'password123',
+        ])
+        ->call('authenticate')
+        ->assertHasNoFormErrors()
+        ->assertRedirect(route('app'));
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('regular user does not see admin panel link on app page', function () {
+    $user = User::factory()->create();
+    $role = Role::firstOrCreate(['name' => 'panel_user', 'guard_name' => 'web']);
+    $user->assignRole($role);
+
+    actingAs($user)
+        ->get('/app')
+        ->assertStatus(200)
+        ->assertDontSee('Painel Admin');
+});
+
+test('admin user sees admin panel link on app page', function () {
+    $user = User::factory()->create();
+    $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+    $user->assignRole($adminRole);
+
+    actingAs($user)
+        ->get('/app')
+        ->assertStatus(200)
+        ->assertSee('Painel Admin');
 });
