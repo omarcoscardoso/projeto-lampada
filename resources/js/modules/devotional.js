@@ -35,7 +35,7 @@ export const devotionalApp = () => ({
 
                 if (Math.ceil(this.scrollPos + container.clientHeight) >= container.scrollHeight - 10) {
                     this.isAutoScrolling = false;
-                    this.markReadingComplete();
+                    this.triggerReadingCompletionWithCelebration();
                     return;
                 }
                 requestAnimationFrame(scrollStep);
@@ -48,8 +48,8 @@ export const devotionalApp = () => ({
         const container = this.$refs.bibleContainer;
         if (!container) return;
 
-        if (Math.ceil(container.scrollTop + container.clientHeight) >= container.scrollHeight - 40) {
-            this.markReadingComplete();
+        if (Math.ceil(container.scrollTop + container.clientHeight) >= container.scrollHeight - 60) {
+            this.triggerReadingCompletionWithCelebration();
         }
     },
 

@@ -160,4 +160,11 @@ export const calendarApp = () => ({
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         return dateObj.toLocaleDateString('pt-BR', options);
     },
+
+    get displayShortDate() {
+        if (!this.currentDate) return '';
+        const dateObj = new Date(this.currentDate + 'T00:00:00');
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        return dateObj.toLocaleDateString('pt-BR', options);
+    },
 });
