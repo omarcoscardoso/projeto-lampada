@@ -116,3 +116,53 @@ test('marking reading complete persists even if devotional row does not exist pr
         ->assertJsonPath('data.annual_read_count', 1)
         ->assertJsonPath('data.completed_dates', [$targetDate]);
 });
+
+test('annual reading count accumulates 365 readings regardless of calendar year and cycles at 365', function () {
+    $user = User::factory()->create();
+
+    for ($month = 1; $month <= 12; $month++) {
+        for ($day = 1; $day <= 31; $day++) {
+            if (UserProgress::where('user_id', $user->id)->count() >= 365) {
+                break 2;
+            }
+            $devotional = Devotional::create([
+                'month' => $month,
+                'day' => $day,
+                'reference_old_testament' => 'Ref AT',
+                'content_old_testament' => 'Txt AT',
+                'reference_new_testament' => 'Ref NT',
+                'content_new_testament' => 'Txt NT',
+            ]);
+            UserProgress::create([
+                'user_id' => $user->id,
+                'devotional_id' => $devotional->id,
+                'completed_at' => Carbon::now()->subDays(10),
+            ]);
+        }
+    }
+
+    $response = actingAs($user)->getJson('/api/user/gamification')->assertStatus(200);
+
+    expect($response->json('data.annual_read_count'))->toBe(365);
+    expect($response->json('data.annual_percentage'))->toEqual(100);
+
+    // Adicionar a 366ª leitura (novo ciclo)
+    $extraDevotional = Devotional::create([
+        'month' => 12,
+        'day' => 31,
+        'reference_old_testament' => 'Ref AT Extra',
+        'content_old_testament' => 'Txt AT Extra',
+        'reference_new_testament' => 'Ref NT Extra',
+        'content_new_testament' => 'Txt NT Extra',
+    ]);
+    UserProgress::create([
+        'user_id' => $user->id,
+        'devotional_id' => $extraDevotional->id,
+        'completed_at' => Carbon::now(),
+    ]);
+
+    $response2 = actingAs($user)->getJson('/api/user/gamification')->assertStatus(200);
+
+    expect($response2->json('data.annual_read_count'))->toBe(1);
+    expect($response2->json('data.annual_percentage'))->toEqual(0.3);
+});

@@ -39,10 +39,18 @@ class UserGamificationService
 
         $completedDates = array_keys($completedDatesSet);
 
-        // Plano Anual
-        $totalDaysInYear = Carbon::create($year)->isLeapYear() ? 366 : 365;
-        $annualReadCount = count($completedDates);
-        $annualPercentage = round(($annualReadCount / $totalDaysInYear) * 100, 1);
+        // Leitura Anual (meta de 365 leituras acumuladas, independente do ano civil)
+        $totalCompleted = $progresses->pluck('devotional_id')->unique()->count();
+        $totalGoal = 365;
+
+        if ($totalCompleted === 0) {
+            $annualReadCount = 0;
+            $annualPercentage = 0.0;
+        } else {
+            $remainder = $totalCompleted % $totalGoal;
+            $annualReadCount = ($remainder === 0) ? $totalGoal : $remainder;
+            $annualPercentage = round(($annualReadCount / $totalGoal) * 100, 1);
+        }
 
         // Ofensiva Semanal (Streak)
         $currentStreak = $this->calculateStreak($completedDatesSet, $now);
@@ -65,7 +73,7 @@ class UserGamificationService
 
         return [
             'annual_read_count' => $annualReadCount,
-            'annual_total_days' => $totalDaysInYear,
+            'annual_total_days' => $totalGoal,
             'annual_percentage' => $annualPercentage,
             'current_streak' => $currentStreak,
             'weekly_days' => $weeklyDays,
