@@ -139,6 +139,72 @@
 
         <!-- Container de Conteúdo (Max-width para leitura) -->
         <div class="mx-auto w-full max-w-4xl p-4 lg:p-10">
+
+            <!-- PAINEL DE GAMIFICAÇÃO MOBILE (Visível apenas em telas < LG) -->
+            <div class="lg:hidden mb-6 space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Card Ofensiva Semanal Mobile -->
+                    <div class="bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl p-4 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="p-1.5 bg-rose-500/10 text-rose-500 rounded-xl">
+                                    <x-lucide-flame class="w-4 h-4 animate-pulse" />
+                                </div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Ofensiva Semanal</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full"
+                                x-text="(gamificationData?.current_streak ?? 0) + ' dias 🔥'"></span>
+                        </div>
+
+                        <!-- 7 Dias da Semana -->
+                        <div class="grid grid-cols-7 gap-1 text-center">
+                            <template x-for="dayObj in (gamificationData?.weekly_days ?? [])" :key="dayObj.date">
+                                <div class="flex flex-col items-center gap-1">
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="dayObj.day"></span>
+                                    <div :class="{
+                                        'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30': dayObj.completed,
+                                        'bg-slate-200/70 dark:bg-slate-800 text-slate-400 dark:text-slate-500': !dayObj.completed,
+                                        'ring-2 ring-amber-500': dayObj.is_today && !dayObj.completed
+                                    }" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all">
+                                        <template x-if="dayObj.completed">
+                                            <x-lucide-check class="w-4 h-4 stroke-[3]" />
+                                        </template>
+                                        <template x-if="!dayObj.completed">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-current opacity-40"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Card Leitura Anual Mobile -->
+                    <div class="bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl p-4 border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="p-1.5 bg-amber-500/10 text-amber-500 rounded-xl">
+                                    <x-lucide-trophy class="w-4 h-4" />
+                                </div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Leitura Anual</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-600 dark:text-amber-400"
+                                x-text="(gamificationData?.annual_percentage ?? 0) + '%'"></span>
+                        </div>
+
+                        <!-- Barra de Progresso Anual -->
+                        <div class="w-full bg-slate-200/70 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden my-2">
+                            <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-2.5 rounded-full transition-all duration-500"
+                                :style="'width: ' + (gamificationData?.annual_percentage ?? 0) + '%'"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <span>Progresso da Leitura</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100" x-text="(gamificationData?.annual_read_count ?? 0) + ' / ' + (gamificationData?.annual_total_days ?? 365) + ' dias'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="devotional-display" class="relative">
                 <div id="devotional-card"
                     class="bg-slate-50 dark:bg-slate-900/50 rounded-[40px] sm:rounded-[60px] border border-slate-100 dark:border-slate-800 p-6 sm:p-12 lg:p-16 relative">
