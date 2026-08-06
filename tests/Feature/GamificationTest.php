@@ -97,3 +97,22 @@ test('breaking weekly streak does not erase annual completed dates', function ()
     expect($response->json('data.annual_read_count'))->toBeGreaterThanOrEqual(1);
     expect($response->json('data.completed_dates'))->toContain($pastDate->format('Y-m-d'));
 });
+
+test('marking reading complete persists even if devotional row does not exist prior to reading', function () {
+    $user = User::factory()->create();
+    $targetDate = '2026-11-15';
+
+    actingAs($user)
+        ->postJson('/api/user/gamification/complete', [
+            'date' => $targetDate,
+        ])
+        ->assertStatus(200)
+        ->assertJsonPath('data.annual_read_count', 1);
+
+    // Ao recarregar ou consultar via GET, a informação deve ser mantida
+    actingAs($user)
+        ->getJson('/api/user/gamification')
+        ->assertStatus(200)
+        ->assertJsonPath('data.annual_read_count', 1)
+        ->assertJsonPath('data.completed_dates', [$targetDate]);
+});

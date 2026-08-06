@@ -85,9 +85,9 @@
                         <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
                             :style="'width: ' + (gamificationData?.annual_percentage ?? 0) + '%'"></div>
                     </div>
-                    <div class="flex justify-between items-center text-[10px] text-slate-400 font-medium">
+                    <div class="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
                         <span>Progresso da Leitura</span>
-                        <span x-text="(gamificationData?.annual_read_count ?? 0) + ' / ' + (gamificationData?.annual_total_days ?? 365) + ' dias'"></span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="(gamificationData?.annual_read_count ?? 0) + ' / ' + (gamificationData?.annual_total_days ?? 365) + ' dias'"></span>
                     </div>
                 </div>
             </div>
@@ -113,7 +113,7 @@
                     <a href="{{ route('terms') }}" class="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">Termos</a>
                 </div>
                 <p class="text-[10px] font-bold text-slate-400 leading-tight">
-                    &copy; {{ date('Y') }} Igreja Presbiteriana Renovada de Viamão.
+                    &copy; {{ date('Y') }} Projeto Lâmpada.
                     <span class="block">Todos os direitos reservados.</span>
                 </p>
             </div>

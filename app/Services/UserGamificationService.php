@@ -80,22 +80,28 @@ class UserGamificationService
     {
         $date = Carbon::parse($dateString);
 
-        $devotional = Devotional::query()
-            ->where('month', $date->month)
-            ->where('day', $date->day)
-            ->first();
+        $devotional = Devotional::firstOrCreate(
+            [
+                'month' => $date->month,
+                'day' => $date->day,
+            ],
+            [
+                'reference_old_testament' => '',
+                'content_old_testament' => '',
+                'reference_new_testament' => '',
+                'content_new_testament' => '',
+            ]
+        );
 
-        if ($devotional) {
-            UserProgress::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'devotional_id' => $devotional->id,
-                ],
-                [
-                    'completed_at' => Carbon::now(),
-                ]
-            );
-        }
+        UserProgress::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'devotional_id' => $devotional->id,
+            ],
+            [
+                'completed_at' => Carbon::now(),
+            ]
+        );
 
         return $this->getUserGamificationData($user, $dateString);
     }
