@@ -255,12 +255,12 @@
                         <!-- Success State -->
                         <template x-if="!calDevotionalLoading && devotionalData">
                             <div>
-                                <div class="mb-8 animate-fade-in-up">
+                                <div class="mb-8 flex flex-col items-center justify-center text-center animate-fade-in-up">
                                     <span
-                                        class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase">
+                                        class="inline-block px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-bold tracking-wider uppercase border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
                                         Leitura do Dia
                                     </span>
-                                    <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                    <p class="mt-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide"
                                         x-text="displayShortDate"></p>
                                 </div>
 
