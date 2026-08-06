@@ -30,10 +30,34 @@ test('authenticated user can fetch gamification data', function () {
                 'annual_total_days',
                 'annual_percentage',
                 'current_streak',
+                'best_streak',
+                'total_completed',
                 'weekly_days',
+                'monthly_stats',
                 'completed_dates',
             ],
         ]);
+});
+
+test('weekly days align correctly starting from Monday with correct is_today marker', function () {
+    $user = User::factory()->create();
+
+    $response = actingAs($user)->getJson('/api/user/gamification')->assertStatus(200);
+
+    $weeklyDays = $response->json('data.weekly_days');
+    expect($weeklyDays)->toHaveCount(7);
+    expect($weeklyDays[0]['day'])->toBe('Seg');
+    expect($weeklyDays[1]['day'])->toBe('Ter');
+    expect($weeklyDays[2]['day'])->toBe('Qua');
+    expect($weeklyDays[3]['day'])->toBe('Qui');
+    expect($weeklyDays[4]['day'])->toBe('Sex');
+    expect($weeklyDays[5]['day'])->toBe('Sáb');
+    expect($weeklyDays[6]['day'])->toBe('Dom');
+
+    $todayFormatted = Carbon::now(config('app.timezone', 'America/Sao_Paulo'))->format('Y-m-d');
+    $todayDayObj = collect($weeklyDays)->firstWhere('is_today', true);
+    expect($todayDayObj)->not->toBeNull();
+    expect($todayDayObj['date'])->toBe($todayFormatted);
 });
 
 test('authenticated user can mark reading as complete and update streak', function () {

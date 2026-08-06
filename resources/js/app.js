@@ -8,6 +8,7 @@ import { aiChat } from './modules/ai-chat';
 import { whatsappHandler } from './modules/whatsapp';
 import { landingApp } from './modules/landing';
 import { gamificationApp } from './modules/gamification';
+import { profileApp } from './modules/profile';
 
 // Import Vanilla Calendar CSS
 import 'vanilla-calendar-pro/styles/index.css';
@@ -23,6 +24,7 @@ Alpine.data('lampadaApp', () => ({
     ...whatsappHandler(), // Lógica de integração com WhatsApp
     ...landingApp(),      // Lógica do landing page
     ...gamificationApp(), // Lógica de gamificação
+    ...profileApp(),      // Lógica de perfil do usuário
 }));
 
 Livewire.start();

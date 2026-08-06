@@ -14,7 +14,7 @@ class UserGamificationService
      */
     public function getUserGamificationData(User $user, ?string $referenceDate = null): array
     {
-        $now = Carbon::now();
+        $now = Carbon::now(config('app.timezone', 'America/Sao_Paulo'));
         $year = $referenceDate ? Carbon::parse($referenceDate)->year : $now->year;
 
         $progresses = UserProgress::query()
@@ -56,7 +56,7 @@ class UserGamificationService
         $currentStreak = $this->calculateStreak($completedDatesSet, $now);
 
         // Dias da semana corrente (Segunda a Domingo)
-        $startOfWeek = $now->copy()->startOfWeek();
+        $startOfWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
         $weeklyDays = [];
         $dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -71,12 +71,39 @@ class UserGamificationService
             ];
         }
 
+        // Estatísticas Mensais do Ano Corrente
+        $monthsShort = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        $monthlyStats = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthCount = 0;
+            foreach ($completedDates as $cDate) {
+                if ((int) Carbon::parse($cDate)->month === $m) {
+                    $monthCount++;
+                }
+            }
+            $monthlyStats[] = [
+                'month' => $monthsShort[$m - 1],
+                'month_num' => $m,
+                'count' => $monthCount,
+                'is_current' => ($m === (int) $now->month),
+            ];
+        }
+
+        // Maior Ofensiva Histórica (Best Streak)
+        $bestStreak = $this->calculateBestStreak($completedDates);
+        if ($currentStreak > $bestStreak) {
+            $bestStreak = $currentStreak;
+        }
+
         return [
             'annual_read_count' => $annualReadCount,
             'annual_total_days' => $totalGoal,
             'annual_percentage' => $annualPercentage,
             'current_streak' => $currentStreak,
+            'best_streak' => $bestStreak,
+            'total_completed' => $totalCompleted,
             'weekly_days' => $weeklyDays,
+            'monthly_stats' => $monthlyStats,
             'completed_dates' => $completedDates,
         ];
     }
@@ -138,5 +165,43 @@ class UserGamificationService
         }
 
         return $streak;
+    }
+
+    /**
+     * Calcula a maior ofensiva histórica (maior sequência de dias consecutivos).
+     */
+    private function calculateBestStreak(array $completedDates): int
+    {
+        if (empty($completedDates)) {
+            return 0;
+        }
+
+        sort($completedDates);
+
+        $maxStreak = 0;
+        $currentStreak = 0;
+        $previousDate = null;
+
+        foreach ($completedDates as $dateStr) {
+            $currentDate = Carbon::parse($dateStr);
+            if ($previousDate === null) {
+                $currentStreak = 1;
+            } else {
+                $diff = $previousDate->diffInDays($currentDate);
+                if ($diff === 1) {
+                    $currentStreak++;
+                } elseif ($diff > 1) {
+                    $currentStreak = 1;
+                }
+            }
+
+            if ($currentStreak > $maxStreak) {
+                $maxStreak = $currentStreak;
+            }
+
+            $previousDate = $currentDate;
+        }
+
+        return $maxStreak;
     }
 }

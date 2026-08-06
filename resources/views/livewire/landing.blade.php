@@ -13,7 +13,7 @@
                         Ir para o App <span aria-hidden="true" class="group-hover:translate-x-1 transition-transform">&rarr;</span>
                     </a>
                 @else
-                    <a href="{{ route('auth.google.redirect') }}" class="text-sm font-black text-slate-900 flex items-center gap-2 hover:text-amber-600 transition-colors group">
+                    <a href="{{ route('filament.admin.auth.login') }}" class="text-sm font-black text-slate-900 flex items-center gap-2 hover:text-amber-600 transition-colors group">
                         Entrar <span aria-hidden="true" class="group-hover:translate-x-1 transition-transform">&rarr;</span>
                     </a>
                 @endauth
@@ -46,7 +46,7 @@
                     @auth
                         <a href="{{ route('app') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Ir para o App</a>
                     @else
-                        <a href="{{ route('auth.google.redirect') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Começar Agora</a>
+                        <a href="{{ route('filament.admin.auth.login') }}" class="rounded-full bg-amber-600 px-12 py-5 text-xl font-black text-white shadow-2xl shadow-amber-600/30 hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 text-center">Começar Agora</a>
                     @endauth
                     <a href="#oq-e" class="rounded-full bg-white border-2 border-slate-200 px-12 py-5 text-xl font-black text-slate-900 hover:bg-slate-50 transition-all hover:scale-105 active:scale-95 text-center">Saiba Mais</a>
                 </div>
@@ -237,7 +237,7 @@
                         Ir para o App
                     </a>
                 @else
-                    <a href="{{ route('auth.google.redirect') }}" class="w-full sm:w-auto bg-amber-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-amber-400 shadow-2xl shadow-amber-500/20 text-xl">
+                    <a href="{{ route('filament.admin.auth.login') }}" class="w-full sm:w-auto bg-amber-500 text-slate-900 px-12 py-6 rounded-2xl font-black flex items-center justify-center gap-3 transition-all hover:scale-105 hover:bg-amber-400 shadow-2xl shadow-amber-500/20 text-xl">
                         Entrar Agora
                     </a>
                 @endauth

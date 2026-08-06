@@ -21,9 +21,15 @@ Route::get('/api/bible/read', BibleController::class)->name('api.bible.read');
 
 Route::post('/api/tts', [TtsController::class, 'generate'])->name('api.tts.generate');
 
+use App\Http\Controllers\Api\ProfileController;
+
 Route::middleware('auth')->group(function () {
     Route::get('/api/user/gamification', [GamificationController::class, 'index'])->name('api.gamification.index');
     Route::post('/api/user/gamification/complete', [GamificationController::class, 'complete'])->name('api.gamification.complete');
+
+    Route::get('/api/user/profile', [ProfileController::class, 'show'])->name('api.user.profile.show');
+    Route::put('/api/user/profile', [ProfileController::class, 'updateProfile'])->name('api.user.profile.update');
+    Route::put('/api/user/password', [ProfileController::class, 'updatePassword'])->name('api.user.password.update');
 });
 
 Route::get('/auth/google/redirect', [SocialiteController::class, 'redirect'])->name('auth.google.redirect');

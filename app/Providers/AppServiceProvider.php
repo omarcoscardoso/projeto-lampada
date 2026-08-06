@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Filament\Responses\LoginResponse;
+use App\Filament\Responses\RegistrationResponse;
 use App\Policies\PermissionPolicy;
 use App\Policies\RolePolicy;
 use Illuminate\Support\Facades\Gate;
@@ -17,7 +19,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \Filament\Auth\Http\Responses\Contracts\LoginResponse::class,
+            LoginResponse::class
+        );
+
+        $this->app->bind(
+            \Filament\Auth\Http\Responses\Contracts\RegistrationResponse::class,
+            RegistrationResponse::class
+        );
     }
 
     /**
