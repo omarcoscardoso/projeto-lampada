@@ -7,10 +7,12 @@ export const calendarApp = () => ({
     calDevotionalLoading: false,
     calError: null,
     calendarInstances: [],
+    displayShortDate: '',
 
     init() {
         // Define a data inicial como hoje
         this.currentDate = this.getFormattedDate(new Date());
+        this.updateDisplayDates();
 
         // Inicializa as instâncias do calendário
         this.initCalendars();
@@ -20,6 +22,21 @@ export const calendarApp = () => ({
 
         // Listener para fechar via evento global (útil para mobile)
         this.initMobileCalendarObserver();
+
+        // Inicializa a busca dos dados de gamificação
+        this.initGamification();
+    },
+
+    /**
+     * Atualiza a propriedade reativa de exibição de data simples (DD/MM/YYYY)
+     */
+    updateDisplayDates() {
+        if (!this.currentDate) {
+            this.displayShortDate = '';
+            return;
+        }
+        const dateObj = new Date(this.currentDate + 'T00:00:00');
+        this.displayShortDate = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     },
 
     /**
@@ -47,6 +64,7 @@ export const calendarApp = () => ({
         const todayStr = this.getFormattedDate(new Date());
         if (this.currentDate !== todayStr) {
             this.currentDate = todayStr;
+            this.updateDisplayDates();
             this.fetchDevotional(todayStr);
 
             const now = new Date();
@@ -67,6 +85,7 @@ export const calendarApp = () => ({
             });
         }
         this.showCalendar = false;
+        this.applyCalendarHighlights();
     },
 
     /**
@@ -89,15 +108,24 @@ export const calendarApp = () => ({
                         const selectedDate = self.context.selectedDates[0];
                         if (selectedDate) {
                             component.currentDate = selectedDate;
+                            component.updateDisplayDates();
                             component.fetchDevotional(selectedDate);
                             component.showCalendar = false;
                         }
+                    },
+                    onClickMonth() {
+                        setTimeout(() => component.applyCalendarHighlights(), 100);
+                    },
+                    onClickYear() {
+                        setTimeout(() => component.applyCalendarHighlights(), 100);
                     },
                 });
                 calendar.init();
                 component.calendarInstances.push(calendar);
             }
         });
+
+        setTimeout(() => component.applyCalendarHighlights(), 100);
     },
 
     initMobileCalendarObserver() {
@@ -110,7 +138,9 @@ export const calendarApp = () => ({
      * Busca os dados no servidor baseados na data selecionada
      */
     async fetchDevotional(date) {
-        this.calD = true;
+        this.currentDate = date;
+        this.updateDisplayDates();
+        this.calDevotionalLoading = true;
         this.calError = null;
         this.devotionalData = null;
 
@@ -135,17 +165,11 @@ export const calendarApp = () => ({
             console.error('Error fetching devotional:', e);
             this.calError = 'Erro de conexão ao carregar dados.';
         } finally {
-            this.calD = false;
+            this.calDevotionalLoading = false;
         }
     },
 
-    /**
-     * Getter para exibir a data por extenso na interface (ex: "segunda-feira, 8 de abril...")
-     */
-    get displayDate() {
-        if (!this.currentDate) return '';
-        const dateObj = new Date(this.currentDate + 'T00:00:00');
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return dateObj.toLocaleDateString('pt-BR', options);
+    getDisplayShortDate() {
+        return this.displayShortDate;
     },
 });

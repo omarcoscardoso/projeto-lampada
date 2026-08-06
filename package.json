@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "alpinejs": "^3.15.8",
+        "canvas-confetti": "^1.9.4",
         "vanilla-calendar-pro": "^3.1.0"
     }
 }

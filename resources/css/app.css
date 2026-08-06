@@ -29,4 +29,20 @@
     animation: var(--animate-fade-in-up);
 }
 
+.vanilla-calendar-day__btn {
+    position: relative !important;
+}
+
+.vc-completed-dot {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    background-color: #10b981;
+    border-radius: 9999px;
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
+}
+
 @import './devotional.css';

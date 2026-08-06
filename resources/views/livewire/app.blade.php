@@ -2,37 +2,95 @@
 
     <!-- SIDEBAR ESQUERDA (Desktop - LG) -->
     <aside
-        class="hidden lg:flex flex-col w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0">
-        <div class="p-6">
+        class="hidden lg:flex flex-col w-80 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shrink-0 overflow-y-auto scrollbar-hide">
+        <div class="p-5 pb-2">
             <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada"
-                class="h-10 w-auto mb-10">
-            <nav class="space-y-2">
+                class="h-9 w-auto mb-4">
+            <nav class="space-y-1">
                 <a href="{{ route('app') }}"
-                    class="flex items-center gap-3 px-4 py-3 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold transition-all">
-                    <x-lucide-home class="w-5 h-5" />
+                    class="flex items-center gap-3 px-3.5 py-2.5 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold text-sm transition-all">
+                    <x-lucide-home class="w-4 h-4 shrink-0" />
                     <span>Leitura do Dia</span>
                 </a>
                 <button @click="showAiChat = true"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all xl:hidden">
-                    <x-lucide-siren class="w-5 h-5" />
+                    class="w-full flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm xl:hidden">
+                    <x-lucide-siren class="w-4 h-4" />
                     <span>Lampião AI</span>
                 </button>
                 <a href="{{ route('landing', ['sobre' => 1]) }}" target="_self"
-                    class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                    <x-lucide-info class="w-5 h-5" />
+                    class="flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
+                    <x-lucide-info class="w-4 h-4" />
                     <span>Sobre</span>
                 </a>
                 <a href="/admin"
-                    class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all">
-                    <x-lucide-layout-dashboard class="w-5 h-5" />
+                    class="flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
+                    <x-lucide-layout-dashboard class="w-4 h-4" />
                     <span>Painel Admin</span>
                 </a>
                 <a href="{{ route('logout') }}"
-                    class="flex items-center gap-3 px-4 py-3 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl transition-all font-medium">
-                    <x-lucide-log-out class="w-5 h-5" />
+                    class="flex items-center gap-3 px-3.5 py-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl transition-all font-medium text-sm">
+                    <x-lucide-log-out class="w-4 h-4" />
                     <span>Sair</span>
                 </a>
             </nav>
+
+            <!-- PAINEL DE GAMIFICAÇÃO (Leitura Anual & Ofensiva Semanal) -->
+            <div class="mt-4 space-y-3">
+                <!-- Card Ofensiva Semanal -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                            <x-lucide-flame class="w-4 h-4 text-rose-500 animate-pulse" />
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Ofensiva Semanal</span>
+                        </div>
+                        <span class="text-[11px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full"
+                            x-text="(gamificationData?.current_streak ?? 0) + ' dias 🔥'"></span>
+                    </div>
+
+                    <!-- 7 Dias da Semana -->
+                    <div class="grid grid-cols-7 gap-1 text-center">
+                        <template x-for="dayObj in (gamificationData?.weekly_days ?? [])" :key="dayObj.date">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="dayObj.day"></span>
+                                <div :class="{
+                                    'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30': dayObj.completed,
+                                    'bg-slate-100 dark:bg-slate-700 text-slate-300 dark:text-slate-600': !dayObj.completed,
+                                    'ring-2 ring-amber-500': dayObj.is_today && !dayObj.completed
+                                }" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all">
+                                    <template x-if="dayObj.completed">
+                                        <x-lucide-check class="w-4 h-4 stroke-[3]" />
+                                    </template>
+                                    <template x-if="!dayObj.completed">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-current opacity-40"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Card Leitura Anual -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <x-lucide-trophy class="w-4 h-4 text-amber-500" />
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Leitura Anual</span>
+                        </div>
+                        <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400"
+                            x-text="(gamificationData?.annual_percentage ?? 0) + '%'"></span>
+                    </div>
+                    
+                    <!-- Barra de Progresso Anual -->
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden mb-1.5">
+                        <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
+                            :style="'width: ' + (gamificationData?.annual_percentage ?? 0) + '%'"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        <span>Progresso da Leitura</span>
+                        <span class="font-bold text-slate-700 dark:text-slate-200" x-text="(gamificationData?.annual_read_count ?? 0) + ' / ' + (gamificationData?.annual_total_days ?? 365) + ' dias'"></span>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- Calendário Fixo na Sidebar -->
         <div class="mt-auto p-4">
@@ -55,7 +113,7 @@
                     <a href="{{ route('terms') }}" class="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">Termos</a>
                 </div>
                 <p class="text-[10px] font-bold text-slate-400 leading-tight">
-                    &copy; {{ date('Y') }} Igreja Presbiteriana Renovada de Viamão.
+                    &copy; {{ date('Y') }} Projeto Lâmpada.
                     <span class="block">Todos os direitos reservados.</span>
                 </p>
             </div>
@@ -70,8 +128,12 @@
         <header
             class="lg:hidden sticky top-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between px-4 h-16">
-                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp"
-                    alt="Logo Lâmpada" class="h-8 w-auto">
+                <div class="flex items-center gap-3">
+                    <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp"
+                        alt="Logo Lâmpada" class="h-8 w-auto">
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-200/50 dark:border-slate-700/50"
+                        x-text="displayShortDate"></span>
+                </div>
                 <button @click="showCalendar = true"
                     class="p-2 text-amber-600 dark:text-amber-500 rounded-full bg-amber-50 dark:bg-amber-900/30">
                     <x-lucide-calendar class="w-6 h-6" />
@@ -81,6 +143,72 @@
 
         <!-- Container de Conteúdo (Max-width para leitura) -->
         <div class="mx-auto w-full max-w-4xl p-4 lg:p-10">
+
+            <!-- PAINEL DE GAMIFICAÇÃO MOBILE (Visível apenas em telas < LG) -->
+            <div class="lg:hidden mb-6 space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Card Ofensiva Semanal Mobile -->
+                    <div class="bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl p-4 border border-slate-100 dark:border-slate-800/80 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="p-1.5 bg-rose-500/10 text-rose-500 rounded-xl">
+                                    <x-lucide-flame class="w-4 h-4 animate-pulse" />
+                                </div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Ofensiva Semanal</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full"
+                                x-text="(gamificationData?.current_streak ?? 0) + ' dias 🔥'"></span>
+                        </div>
+
+                        <!-- 7 Dias da Semana -->
+                        <div class="grid grid-cols-7 gap-1 text-center">
+                            <template x-for="dayObj in (gamificationData?.weekly_days ?? [])" :key="dayObj.date">
+                                <div class="flex flex-col items-center gap-1">
+                                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="dayObj.day"></span>
+                                    <div :class="{
+                                        'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30': dayObj.completed,
+                                        'bg-slate-200/70 dark:bg-slate-800 text-slate-400 dark:text-slate-500': !dayObj.completed,
+                                        'ring-2 ring-amber-500': dayObj.is_today && !dayObj.completed
+                                    }" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all">
+                                        <template x-if="dayObj.completed">
+                                            <x-lucide-check class="w-4 h-4 stroke-[3]" />
+                                        </template>
+                                        <template x-if="!dayObj.completed">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-current opacity-40"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Card Leitura Anual Mobile -->
+                    <div class="bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-md rounded-3xl p-4 border border-slate-100 dark:border-slate-800/80 shadow-sm flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="p-1.5 bg-amber-500/10 text-amber-500 rounded-xl">
+                                    <x-lucide-trophy class="w-4 h-4" />
+                                </div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-100">Leitura Anual</span>
+                            </div>
+                            <span class="text-xs font-extrabold text-amber-600 dark:text-amber-400"
+                                x-text="(gamificationData?.annual_percentage ?? 0) + '%'"></span>
+                        </div>
+
+                        <!-- Barra de Progresso Anual -->
+                        <div class="w-full bg-slate-200/70 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden my-2">
+                            <div class="bg-gradient-to-r from-amber-500 to-amber-600 h-2.5 rounded-full transition-all duration-500"
+                                :style="'width: ' + (gamificationData?.annual_percentage ?? 0) + '%'"></div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                            <span>Progresso da Leitura</span>
+                            <span class="font-bold text-slate-800 dark:text-slate-100" x-text="(gamificationData?.annual_read_count ?? 0) + ' / ' + (gamificationData?.annual_total_days ?? 365) + ' dias'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="devotional-display" class="relative">
                 <div id="devotional-card"
                     class="bg-slate-50 dark:bg-slate-900/50 rounded-[40px] sm:rounded-[60px] border border-slate-100 dark:border-slate-800 p-6 sm:p-12 lg:p-16 relative">
@@ -127,13 +255,15 @@
                         <!-- Success State -->
                         <template x-if="!calDevotionalLoading && devotionalData">
                             <div>
-                                <div class="mb-10 animate-fade-in-up">
-                                    <span
-                                        class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase mb-3">
-                                        Leitura do Dia
-                                    </span>
-                                    <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize"
-                                        x-text="displayDate"></h2>
+                                <div class="mb-8 animate-fade-in-up">
+                                    <div class="inline-flex flex-col items-center">
+                                        <span
+                                            class="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-bold tracking-wider uppercase border border-amber-200/50 dark:border-amber-800/50 shadow-sm">
+                                            Leitura do Dia
+                                        </span>
+                                        <p class="mt-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wide text-center"
+                                            x-text="displayShortDate"></p>
+                                    </div>
                                 </div>
 
                                 <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
@@ -332,7 +462,7 @@
             </header>
 
 
-            <div x-ref="bibleContainer" class="flex-grow overflow-y-auto p-6 lg:p-20 scrollbar-hide pb-20">
+            <div x-ref="bibleContainer" @scroll="checkBibleScrollEnd" class="flex-grow overflow-y-auto p-6 lg:p-20 scrollbar-hide pb-20">
                 <div class="max-w-4xl mx-auto">
                     <template x-if="bibleLoading">
                         <div class="flex flex-col items-center justify-center h-64 space-y-4">

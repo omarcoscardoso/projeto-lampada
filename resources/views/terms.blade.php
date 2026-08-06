@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Termos de Serviço - {{ config('app.name', 'Projeto Lâmpada') }}</title>
-    <meta name="description" content="Termos de Serviço do Projeto Lâmpada - Igreja Presbiteriana Renovada de Viamão. Condições de uso da plataforma.">
+    <meta name="description" content="Termos de Serviço do Projeto Lâmpada. Condições de uso da plataforma.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -45,7 +45,7 @@
                     Termos de Serviço
                 </h1>
                 <p class="text-slate-500 text-sm font-medium">
-                    Última atualização: {{ date('d/m/Y') }} &bull; Projeto Lâmpada (Igreja Presbiteriana Renovada de Viamão)
+                    Última atualização: {{ date('d/m/Y') }} &bull; Projeto Lâmpada
                 </p>
             </div>
 
@@ -140,8 +140,7 @@
                         Estes Termos de Serviço são regidos pelas leis da República Federativa do Brasil. Para eventuais esclarecimentos sobre estes termos, entre em contato:
                     </p>
                     <p class="font-bold text-amber-700">
-                        Igreja Presbiteriana Renovada de Viamão<br>
-                        <a href="mailto:contato@iprviamao.com.br" class="underline hover:text-amber-800">contato@iprviamao.com.br</a>
+                        <a href="mailto:cardoso.oliveira@gmail.com" class="underline hover:text-amber-800">cardoso.oliveira@gmail.com</a>
                     </p>
                 </section>
             </div>
@@ -153,7 +152,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-slate-500 font-medium">
             <div class="flex items-center gap-2">
                 <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp" alt="Logo Lâmpada" class="h-6 w-auto opacity-70" />
-                <span>&copy; {{ date('Y') }} Igreja Presbiteriana Renovada de Viamão.</span>
+                <span>&copy; {{ date('Y') }} Projeto Lâmpa  da.</span>
             </div>
             <div class="flex items-center gap-6">
                 <a href="{{ route('privacy') }}" class="hover:text-slate-900 transition-colors">Política de Privacidade</a>
