@@ -34,7 +34,7 @@
                 </a>
             </nav>
 
-            <!-- PAINEL DE GAMIFICAÇÃO (Plano Anual & Ofensiva Semanal) -->
+            <!-- PAINEL DE GAMIFICAÇÃO (Leitura Anual & Ofensiva Semanal) -->
             <div class="mt-4 space-y-3">
                 <!-- Card Ofensiva Semanal -->
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
@@ -51,14 +51,14 @@
                     <div class="grid grid-cols-7 gap-1 text-center">
                         <template x-for="dayObj in (gamificationData?.weekly_days ?? [])" :key="dayObj.date">
                             <div class="flex flex-col items-center gap-1">
-                                <span class="text-[10px] font-semibold text-slate-400 dark:text-slate-500" x-text="dayObj.day"></span>
+                                <span class="text-xs font-bold text-slate-500 dark:text-slate-400" x-text="dayObj.day"></span>
                                 <div :class="{
                                     'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30': dayObj.completed,
                                     'bg-slate-100 dark:bg-slate-700 text-slate-300 dark:text-slate-600': !dayObj.completed,
                                     'ring-2 ring-amber-500': dayObj.is_today && !dayObj.completed
-                                }" class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] transition-all">
+                                }" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all">
                                     <template x-if="dayObj.completed">
-                                        <x-lucide-check class="w-3.5 h-3.5 stroke-[3]" />
+                                        <x-lucide-check class="w-4 h-4 stroke-[3]" />
                                     </template>
                                     <template x-if="!dayObj.completed">
                                         <span class="w-1.5 h-1.5 rounded-full bg-current opacity-40"></span>
@@ -69,12 +69,12 @@
                     </div>
                 </div>
 
-                <!-- Card Plano Anual -->
+                <!-- Card Leitura Anual -->
                 <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-700/80 shadow-sm">
                     <div class="flex items-center justify-between mb-1.5">
                         <div class="flex items-center gap-1.5">
                             <x-lucide-trophy class="w-4 h-4 text-amber-500" />
-                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Plano Anual</span>
+                            <span class="text-xs font-bold text-slate-700 dark:text-slate-200">Leitura Anual</span>
                         </div>
                         <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400"
                             x-text="(gamificationData?.annual_percentage ?? 0) + '%'"></span>
