@@ -48,8 +48,11 @@ export const gamificationApp = () => ({
 
     fireConfetti() {
         try {
-            const count = 200;
-            const defaults = { origin: { y: 0.7 } };
+            const count = 250;
+            const defaults = {
+                origin: { y: 0.6 },
+                zIndex: 999999
+            };
 
             function fire(particleRatio, opts) {
                 confetti({
