@@ -7,7 +7,6 @@ export const calendarApp = () => ({
     calDevotionalLoading: false,
     calError: null,
     calendarInstances: [],
-    displayDate: '',
     displayShortDate: '',
 
     init() {
@@ -29,16 +28,14 @@ export const calendarApp = () => ({
     },
 
     /**
-     * Atualiza as propriedades reativas de exibição de data
+     * Atualiza a propriedade reativa de exibição de data simples (DD/MM/YYYY)
      */
     updateDisplayDates() {
         if (!this.currentDate) {
-            this.displayDate = '';
             this.displayShortDate = '';
             return;
         }
         const dateObj = new Date(this.currentDate + 'T00:00:00');
-        this.displayDate = dateObj.toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         this.displayShortDate = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     },
 
@@ -170,10 +167,6 @@ export const calendarApp = () => ({
         } finally {
             this.calDevotionalLoading = false;
         }
-    },
-
-    getDisplayDate() {
-        return this.displayDate;
     },
 
     getDisplayShortDate() {

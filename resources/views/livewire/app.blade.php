@@ -131,8 +131,12 @@
         <header
             class="lg:hidden sticky top-0 w-full z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between px-4 h-16">
-                <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp"
-                    alt="Logo Lâmpada" class="h-8 w-auto">
+                <div class="flex items-center gap-3">
+                    <img src="https://storage.googleapis.com/iprviamao-com-br/lampada/logo_lampada_app.webp"
+                        alt="Logo Lâmpada" class="h-8 w-auto">
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-200/50 dark:border-slate-700/50"
+                        x-text="displayShortDate"></span>
+                </div>
                 <button @click="showCalendar = true"
                     class="p-2 text-amber-600 dark:text-amber-500 rounded-full bg-amber-50 dark:bg-amber-900/30">
                     <x-lucide-calendar class="w-6 h-6" />
@@ -254,17 +258,14 @@
                         <!-- Success State -->
                         <template x-if="!calDevotionalLoading && devotionalData">
                             <div>
-                                <div class="mb-10 animate-fade-in-up">
-                                    <div class="flex items-center gap-2 mb-3 flex-wrap">
-                                        <span
-                                            class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase">
+                                <div class="mb-8 animate-fade-in-up">
+                                    <div class="flex items-center gap-3 flex-wrap">
+                                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
                                             Leitura do Dia
-                                        </span>
-                                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full capitalize"
+                                        </h2>
+                                        <span class="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-800/50 shadow-sm"
                                             x-text="displayShortDate"></span>
                                     </div>
-                                    <h2 class="text-3xl font-bold text-slate-900 dark:text-white leading-tight capitalize"
-                                        x-text="displayDate"></h2>
                                 </div>
 
                                 <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
