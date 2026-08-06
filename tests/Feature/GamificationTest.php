@@ -110,11 +110,12 @@ test('marking reading complete persists even if devotional row does not exist pr
         ->assertJsonPath('data.annual_read_count', 1);
 
     // Ao recarregar ou consultar via GET, a informação deve ser mantida
-    actingAs($user)
+    $res = actingAs($user)
         ->getJson('/api/user/gamification')
         ->assertStatus(200)
-        ->assertJsonPath('data.annual_read_count', 1)
-        ->assertJsonPath('data.completed_dates', [$targetDate]);
+        ->assertJsonPath('data.annual_read_count', 1);
+
+    expect($res->json('data.completed_dates'))->toContain($targetDate);
 });
 
 test('annual reading count accumulates 365 readings regardless of calendar year and cycles at 365', function () {

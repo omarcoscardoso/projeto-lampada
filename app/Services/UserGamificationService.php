@@ -26,12 +26,16 @@ class UserGamificationService
         $completedDatesSet = [];
 
         foreach ($progresses as $progress) {
+            if ($progress->completed_at) {
+                $completedDatesSet[$progress->completed_at->format('Y-m-d')] = true;
+            }
+
             if ($progress->devotional) {
                 $dateStr = sprintf(
                     '%04d-%02d-%02d',
                     $year,
-                    $progress->devotional->month,
-                    $progress->devotional->day
+                    (int) $progress->devotional->month,
+                    (int) $progress->devotional->day
                 );
                 $completedDatesSet[$dateStr] = true;
             }
