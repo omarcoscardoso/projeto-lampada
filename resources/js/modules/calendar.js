@@ -2,6 +2,11 @@ import { Calendar } from 'vanilla-calendar-pro';
 
 export const calendarApp = () => ({
     showCalendar: false,
+    currentDate: null,
+    devotionalData: null,
+    calDevotionalLoading: false,
+    calError: null,
+    calendarInstances: [],
     displayDate: '',
     displayShortDate: '',
 
@@ -138,7 +143,7 @@ export const calendarApp = () => ({
     async fetchDevotional(date) {
         this.currentDate = date;
         this.updateDisplayDates();
-        this.calD = true;
+        this.calDevotionalLoading = true;
         this.calError = null;
         this.devotionalData = null;
 
@@ -163,7 +168,7 @@ export const calendarApp = () => ({
             console.error('Error fetching devotional:', e);
             this.calError = 'Erro de conexão ao carregar dados.';
         } finally {
-            this.calD = false;
+            this.calDevotionalLoading = false;
         }
     },
 
