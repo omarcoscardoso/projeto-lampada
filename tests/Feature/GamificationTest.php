@@ -118,6 +118,26 @@ test('marking reading complete persists even if devotional row does not exist pr
     expect($res->json('data.completed_dates'))->toContain($targetDate);
 });
 
+test('reading yesterday devotional marks only yesterday date and not today or tomorrow date', function () {
+    $user = User::factory()->create();
+    $yesterday = Carbon::now()->subDay()->format('Y-m-d');
+    $today = Carbon::now()->format('Y-m-d');
+
+    actingAs($user)
+        ->postJson('/api/user/gamification/complete', [
+            'date' => $yesterday,
+        ])
+        ->assertStatus(200)
+        ->assertJsonPath('data.annual_read_count', 1);
+
+    $res = actingAs($user)
+        ->getJson('/api/user/gamification')
+        ->assertStatus(200);
+
+    expect($res->json('data.completed_dates'))->toContain($yesterday);
+    expect($res->json('data.completed_dates'))->not->toContain($today);
+});
+
 test('annual reading count accumulates 365 readings regardless of calendar year and cycles at 365', function () {
     $user = User::factory()->create();
 
