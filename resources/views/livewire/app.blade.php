@@ -10,10 +10,7 @@
                 <a href="{{ route('app') }}"
                     class="flex items-center gap-3 px-3.5 py-2.5 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-500/20 font-bold text-sm transition-all">
                     <x-lucide-home class="w-4 h-4 shrink-0" />
-                    <div class="flex flex-col text-left leading-tight">
-                        <span>Leitura do Dia</span>
-                        <span class="text-[10px] font-normal opacity-90 capitalize" x-text="displayShortDate"></span>
-                    </div>
+                    <span>Leitura do Dia</span>
                 </a>
                 <button @click="showAiChat = true"
                     class="w-full flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm xl:hidden">
@@ -259,13 +256,12 @@
                         <template x-if="!calDevotionalLoading && devotionalData">
                             <div>
                                 <div class="mb-8 animate-fade-in-up">
-                                    <div class="flex items-center gap-3 flex-wrap">
-                                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
-                                            Leitura do Dia
-                                        </h2>
-                                        <span class="text-xs sm:text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3.5 py-1 rounded-full border border-amber-200/50 dark:border-amber-800/50 shadow-sm"
-                                            x-text="displayShortDate"></span>
-                                    </div>
+                                    <span
+                                        class="inline-block px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-semibold tracking-wider uppercase">
+                                        Leitura do Dia
+                                    </span>
+                                    <p class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                        x-text="displayShortDate"></p>
                                 </div>
 
                                 <div class="space-y-12 animate-fade-in-up" style="animation-delay: 100ms">
