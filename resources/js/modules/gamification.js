@@ -16,6 +16,7 @@ export const gamificationApp = () => ({
             const res = await fetch('/api/user/gamification', {
                 headers: {
                     'Accept': 'application/json',
+                    'Cache-Control': 'no-cache',
                 }
             });
             if (res.ok) {
