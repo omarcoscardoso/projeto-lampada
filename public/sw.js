@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lampada-v1';
+const CACHE_NAME = 'lampada-v2';
 
 const PRECACHE_ASSETS = [
     '/',
@@ -32,8 +32,8 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Ignora requisições não-GET e cross-origin (APIs externas, CDNs, etc.)
-    if (request.method !== 'GET' || url.origin !== location.origin) {
+    // Ignora requisições não-GET, rotas de API e cross-origin (APIs externas, CDNs, etc.)
+    if (request.method !== 'GET' || url.origin !== location.origin || url.pathname.startsWith('/api/')) {
         return;
     }
 
@@ -68,3 +68,4 @@ self.addEventListener('fetch', (event) => {
         })
     );
 });
+

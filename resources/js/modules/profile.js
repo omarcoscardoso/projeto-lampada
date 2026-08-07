@@ -42,6 +42,7 @@ export const profileApp = () => ({
             const res = await fetch('/api/user/profile', {
                 headers: {
                     'Accept': 'application/json',
+                    'Cache-Control': 'no-cache',
                 }
             });
             if (res.ok) {
