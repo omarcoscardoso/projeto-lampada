@@ -24,7 +24,7 @@
                 </a>
                 <button @click="openProfileModal('stats')"
                     class="w-full flex items-center gap-3 px-3.5 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all font-medium text-sm">
-                    <x-lucide-user-circle class="w-4 h-4 text-amber-500" />
+                    <x-lucide-user-circle class="w-4 h-4" />
                     <span>Meu Perfil</span>
                 </button>
                 @if (auth()->user()?->hasAnyRole(['super_admin', 'admin']))
@@ -626,7 +626,7 @@
                 <x-lucide-info class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Sobre</span>
             </a>
-            <button @click="openProfileModal('stats')" class="flex flex-col items-center justify-center flex-1 text-amber-500 font-bold">
+            <button @click="openProfileModal('stats')" class="flex flex-col items-center justify-center flex-1 text-slate-400 font-bold">
                 <x-lucide-user-circle class="w-6 h-6 mb-1" />
                 <span class="text-[10px] font-medium">Perfil</span>
             </button>
@@ -753,7 +753,7 @@
             x-transition:leave-end="opacity-0 scale-95 translate-y-4">
 
             <!-- Modal Header -->
-            <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
                 <div class="flex items-center gap-3">
                     <img :src="profileData?.user?.avatar || 'https://ui-avatars.com/api/?name=User&background=f59e0b&color=ffffff'"
                         alt="Avatar" class="w-12 h-12 rounded-2xl object-cover border-2 border-amber-500 shadow-md">
@@ -771,36 +771,39 @@
             </div>
 
             <!-- Modal Tabs Nav -->
-            <div class="flex border-b border-slate-100 dark:border-slate-800 px-6 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-auto scrollbar-hide">
+            <div class="flex border-b border-slate-100 dark:border-slate-800 px-2 sm:px-6 bg-slate-50/30 dark:bg-slate-900/30 overflow-x-auto scrollbar-hide">
                 <button @click="profileTab = 'stats'"
                     :class="profileTab === 'stats' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
-                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
-                    <x-lucide-bar-chart-3 class="w-4 h-4" />
-                    <span>Estatísticas & Ofensivas</span>
+                    class="flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 py-3.5 px-2 sm:px-4 border-b-2 text-xs transition-all whitespace-nowrap"
+                    title="Estatísticas">
+                    <x-lucide-bar-chart-3 class="w-5 h-5 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Estatísticas</span>
                 </button>
 
                 <button @click="profileTab = 'info'"
                     :class="profileTab === 'info' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
-                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
-                    <x-lucide-user class="w-4 h-4" />
-                    <span>Meus Dados</span>
+                    class="flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 py-3.5 px-2 sm:px-4 border-b-2 text-xs transition-all whitespace-nowrap"
+                    title="Meus Dados">
+                    <x-lucide-user class="w-5 h-5 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Meus Dados</span>
                 </button>
 
                 <button @click="profileTab = 'password'"
                     :class="profileTab === 'password' ? 'border-amber-500 text-amber-600 dark:text-amber-400 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-semibold'"
-                    class="flex items-center gap-2 py-3.5 px-4 border-b-2 text-xs transition-all whitespace-nowrap">
-                    <x-lucide-key-round class="w-4 h-4" />
-                    <span>Trocar Senha</span>
+                    class="flex-1 sm:flex-none flex items-center justify-center sm:justify-start gap-2 py-3.5 px-2 sm:px-4 border-b-2 text-xs transition-all whitespace-nowrap"
+                    title="Trocar Senha">
+                    <x-lucide-key-round class="w-5 h-5 sm:w-4 sm:h-4" />
+                    <span class="hidden sm:inline">Trocar Senha</span>
                 </button>
             </div>
 
             <!-- Modal Content (Scrollable) -->
-            <div class="flex-1 overflow-y-auto p-6 scrollbar-hide space-y-6">
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide space-y-6">
 
                 <!-- ABA 1: ESTATÍSTICAS & OFENSIVAS -->
                 <div x-show="profileTab === 'stats'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1">
                     <!-- Cards Grid -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6">
                         <!-- Ofensiva Atual -->
                         <div class="bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 p-4 rounded-3xl border border-rose-100 dark:border-rose-900/30">
                             <div class="flex items-center gap-2 mb-1">
@@ -843,11 +846,11 @@
                     </div>
 
                     <!-- Gráfico Mensal de Leitura -->
-                    <div class="bg-slate-50 dark:bg-slate-800/60 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80">
+                    <div class="bg-slate-50 dark:bg-slate-800/60 p-4 sm:p-5 rounded-3xl border border-slate-200/80 dark:border-slate-700/80">
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <h3 class="text-sm font-extrabold text-slate-800 dark:text-slate-100">Gráfico de Histórico Mensal</h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Dias lidos concluídos em cada mês do ano</p>
+                                <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Dias lidos concluídos em cada mês do ano</p>
                             </div>
                             <span class="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
                                 {{ date('Y') }}
@@ -855,33 +858,35 @@
                         </div>
 
                         <!-- Gráfico de Colunas em HTML5/CSS -->
-                        <div class="h-44 flex items-end justify-between gap-1.5 pt-6 pb-2 px-1">
-                            <template x-for="item in (gamificationData?.monthly_stats ?? [])" :key="item.month_num">
-                                <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
-                                    <!-- Tooltip Hover -->
-                                    <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap shadow-lg z-10"
-                                        x-text="item.count + ' dias'"></div>
+                        <div class="overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+                            <div class="h-44 flex items-end justify-between gap-1 sm:gap-1.5 pt-6 min-w-[280px]">
+                                <template x-for="item in (gamificationData?.monthly_stats ?? [])" :key="item.month_num">
+                                    <div class="flex-1 flex flex-col items-center gap-1 sm:gap-2 h-full justify-end group relative">
+                                        <!-- Tooltip Hover -->
+                                        <div class="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold py-1 px-2 rounded-lg pointer-events-none whitespace-nowrap shadow-lg z-10"
+                                            x-text="item.count + ' dias'"></div>
 
-                                    <!-- Valor Acima da Barra -->
-                                    <span class="text-[10px] font-extrabold text-slate-600 dark:text-slate-400"
-                                        x-text="item.count > 0 ? item.count : ''"></span>
+                                        <!-- Valor Acima da Barra -->
+                                        <span class="text-[9px] sm:text-[10px] font-extrabold text-slate-600 dark:text-slate-400"
+                                            x-text="item.count > 0 ? item.count : ''"></span>
 
-                                    <!-- Barra Proporcional (meta 31 dias por mes) -->
-                                    <div class="w-full rounded-t-xl transition-all duration-500"
-                                        :class="{
-                                            'bg-gradient-to-t from-amber-500 to-amber-400 shadow-md shadow-amber-500/20': item.is_current && item.count > 0,
-                                            'bg-gradient-to-t from-emerald-500 to-emerald-400': !item.is_current && item.count > 0,
-                                            'bg-slate-200 dark:bg-slate-700': item.count === 0,
-                                            'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-slate-900': item.is_current
-                                        }"
-                                        :style="'height: ' + Math.max(item.count > 0 ? (item.count / 31 * 100) : 6, 6) + '%'"></div>
+                                        <!-- Barra Proporcional (meta 31 dias por mes) -->
+                                        <div class="w-full rounded-t-xl transition-all duration-500"
+                                            :class="{
+                                                'bg-gradient-to-t from-amber-500 to-amber-400 shadow-md shadow-amber-500/20': item.is_current && item.count > 0,
+                                                'bg-gradient-to-t from-emerald-500 to-emerald-400': !item.is_current && item.count > 0,
+                                                'bg-slate-200 dark:bg-slate-700': item.count === 0,
+                                                'ring-2 ring-amber-500 ring-offset-1 dark:ring-offset-slate-900': item.is_current
+                                            }"
+                                            :style="'height: ' + Math.max(item.count > 0 ? (item.count / 31 * 100) : 6, 6) + '%'"></div>
 
-                                    <!-- Rótulo do Mês -->
-                                    <span class="text-[11px] font-bold transition-colors"
-                                        :class="item.is_current ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
-                                        x-text="item.month"></span>
-                                </div>
-                            </template>
+                                        <!-- Rótulo do Mês -->
+                                        <span class="text-[9px] sm:text-[11px] font-bold transition-colors"
+                                            :class="item.is_current ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'"
+                                            x-text="item.month"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
