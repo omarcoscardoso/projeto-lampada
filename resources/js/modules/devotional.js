@@ -1,6 +1,5 @@
-import { BibleTokenizer } from './tts-highlight';
-
 export const devotionalApp = () => ({
+
     showBibleModal: false,
     bibleLoading: false,
     bibleData: null,
@@ -68,9 +67,7 @@ export const devotionalApp = () => ({
 
         try {
             const response = await fetch(`/api/bible/read?ref_old=${encodeURIComponent(refOld || '')}&ref_new=${encodeURIComponent(refNew || '')}`);
-            const data = await response.json();
-            BibleTokenizer.processBibleData(data);
-            this.bibleData = data;
+            this.bibleData = await response.json();
             
             this.$nextTick(() => {
                 if (this.highlightManager && this.$refs.bibleContainer) {
@@ -84,6 +81,7 @@ export const devotionalApp = () => ({
             this.bibleLoading = false;
         }
     },
+
 
     closeBibleModal() {
         this.stopTts();

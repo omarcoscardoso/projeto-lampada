@@ -493,16 +493,7 @@
                                                         class="text-xl lg:text-2xl leading-relaxed text-slate-700 dark:text-slate-300 font-serif">
                                                         <sup class="text-sm font-bold text-indigo-500 mr-2"
                                                             x-text="verse.number"></sup>
-                                                        <template x-if="verse.tokens && verse.tokens.length > 0">
-                                                            <span>
-                                                                <template x-for="token in verse.tokens" :key="token.id">
-                                                                    <span :data-t="token.id" :data-v="chapter.number + '.' + verse.number" x-text="token.rawText"></span>
-                                                                </template>
-                                                            </span>
-                                                        </template>
-                                                        <template x-if="!verse.tokens || verse.tokens.length === 0">
-                                                            <span x-text="verse.text"></span>
-                                                        </template>
+                                                        <span x-text="verse.text"></span>
                                                     </p>
                                                 </template>
                                             </div>
@@ -524,16 +515,7 @@
                                                         class="text-xl lg:text-2xl leading-relaxed text-slate-700 dark:text-slate-300 font-serif">
                                                         <sup class="text-sm font-bold text-rose-500 mr-2"
                                                             x-text="verse.number"></sup>
-                                                        <template x-if="verse.tokens && verse.tokens.length > 0">
-                                                            <span>
-                                                                <template x-for="token in verse.tokens" :key="token.id">
-                                                                    <span :data-t="token.id" :data-v="chapter.number + '.' + verse.number" x-text="token.rawText"></span>
-                                                                </template>
-                                                            </span>
-                                                        </template>
-                                                        <template x-if="!verse.tokens || verse.tokens.length === 0">
-                                                            <span x-text="verse.text"></span>
-                                                        </template>
+                                                        <span x-text="verse.text"></span>
                                                     </p>
                                                 </template>
                                             </div>
@@ -541,6 +523,7 @@
                                     </template>
                                 </div>
                             </template>
+
 
                             <template
                                 x-if="(!bibleData.old_testament || !bibleData.old_testament.success) && (!bibleData.new_testament || !bibleData.new_testament.success)">

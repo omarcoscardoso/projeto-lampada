@@ -1,6 +1,7 @@
-import { TTSHighlightManager, BibleTokenizer } from './tts-highlight';
+import { TTSHighlightManager } from './tts-highlight';
 
 const highlightManager = new TTSHighlightManager();
+
 
 
 export const ttsHandler = () => ({
@@ -30,38 +31,43 @@ export const ttsHandler = () => ({
     extractBibleBlocks() {
         if (!this.bibleData) { return []; }
 
-        // Garante que o texto bíblico possui tokens indexados
-        BibleTokenizer.processBibleData(this.bibleData);
-
         const blocks = [];
         const processTestament = (testament, testamentType) => {
             if (!testament || !testament.success || !testament.chapters) { return; }
 
             testament.chapters.forEach(chapter => {
                 const parts = [];
-                const blockTokens = [];
+                const versesInfo = [];
 
                 const headerText = `${testament.book_name} o capítulo ${chapter.number}.`;
                 parts.push(headerText);
 
-                let startVerse = null;
-                let endVerse = null;
+                let totalVersesCharLength = 0;
 
                 if (chapter.verses && chapter.verses.length > 0) {
-                    startVerse = chapter.verses[0].number;
-                    endVerse = chapter.verses[chapter.verses.length - 1].number;
-
                     chapter.verses.forEach(verse => {
-                        if (verse.tokens) {
-                            blockTokens.push(...verse.tokens);
-                        }
-                        if (this.ttsAnnounceVerses) {
-                            parts.push(`Versículo ${verse.number}. ${verse.text}`);
-                        } else {
-                            parts.push(verse.text);
-                        }
+                        const verseText = verse.text;
+                        const verseCharLength = verseText.length;
+                        const verseKey = `${chapter.number}.${verse.number}`;
+
+                        versesInfo.push({
+                            verseKey,
+                            number: verse.number,
+                            text: verseText,
+                            charStart: totalVersesCharLength,
+                            charEnd: totalVersesCharLength + verseCharLength,
+                            length: verseCharLength,
+                        });
+
+                        totalVersesCharLength += verseCharLength;
+                        parts.push(verseText);
                     });
                 }
+
+                versesInfo.forEach(v => {
+                    v.ratioStart = totalVersesCharLength > 0 ? (v.charStart / totalVersesCharLength) : 0;
+                    v.ratioEnd = totalVersesCharLength > 0 ? (v.charEnd / totalVersesCharLength) : 1;
+                });
 
                 const fullText = parts.join(' ');
                 const headerLength = headerText.length;
@@ -73,12 +79,12 @@ export const ttsHandler = () => ({
                     book_name: testament.book_name,
                     book_abbrev: testament.book_abbrev || testament.book_name.substring(0, 3).toLowerCase(),
                     chapter: chapter.number,
-                    start_verse: startVerse,
-                    end_verse: endVerse,
+                    start_verse: chapter.verses?.[0]?.number ?? null,
+                    end_verse: chapter.verses?.[chapter.verses.length - 1]?.number ?? null,
                     text: fullText,
                     headerText,
                     headerRatio,
-                    tokens: blockTokens,
+                    verses: versesInfo,
                 });
             });
         };
@@ -237,24 +243,24 @@ export const ttsHandler = () => ({
         this._stopSyncLoop();
 
         let currentBlock = null;
-        let blockTokens = [];
+        let verses = [];
         if (this._currentBlocks && this._currentBlocks[this._currentAudioIndex]) {
             currentBlock = this._currentBlocks[this._currentAudioIndex];
-            blockTokens = currentBlock.tokens || [];
+            verses = currentBlock.verses || [];
         }
-        if (!blockTokens.length && this._currentBlocks) {
+        if (!verses.length && this._currentBlocks) {
             this._currentBlocks.forEach(b => {
-                if (b.tokens) blockTokens.push(...b.tokens);
+                if (b.verses) verses.push(...b.verses);
             });
         }
 
-        if (!blockTokens.length) {
-            console.warn('[TTS-Sync] Nenhum token encontrado para sincronização.');
+        if (!verses.length) {
+            console.warn('[TTS-Sync] Nenhum versículo encontrado para sincronização.');
             return;
         }
 
         const headerRatio = currentBlock?.headerRatio || 0;
-        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${blockTokens.length} tokens. Offset de cabeçalho: ${(headerRatio * 100).toFixed(1)}%`);
+        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${verses.length} versículos. Header Offset: ${(headerRatio * 100).toFixed(1)}%`);
 
         const loop = () => {
             if (this._audioElement && !this._audioElement.paused && this._audioElement.duration > 0) {
@@ -263,21 +269,14 @@ export const ttsHandler = () => ({
                 const overallProgress = Math.min(Math.max(currentTime / duration, 0), 1);
 
                 if (overallProgress < headerRatio) {
-                    // Enquanto a narração está lendo o título/capítulo ("Salmos o capítulo 119"), mantém sem destacar tokens de versículo
                     highlightManager.clearAllHighlights();
                 } else {
-                    // Ajusta a escala de progresso descontando o tempo da vinheta inicial
-                    const versesProgress = (overallProgress - headerRatio) / (1 - headerRatio);
-                    const clampedVersesProgress = Math.min(Math.max(versesProgress, 0), 1);
+                    const versesProgress = Math.min(Math.max((overallProgress - headerRatio) / (1 - headerRatio), 0), 1);
 
-                    const tokenIndex = Math.min(
-                        Math.floor(clampedVersesProgress * blockTokens.length),
-                        blockTokens.length - 1
-                    );
+                    const activeVerse = verses.find(v => versesProgress >= v.ratioStart && versesProgress <= v.ratioEnd) || verses[verses.length - 1];
 
-                    const activeToken = blockTokens[tokenIndex];
-                    if (activeToken) {
-                        highlightManager.setActiveToken(activeToken.id);
+                    if (activeVerse) {
+                        highlightManager.setActiveVerse(activeVerse.verseKey);
                     }
                 }
             }
@@ -289,6 +288,7 @@ export const ttsHandler = () => ({
 
         this._rafId = requestAnimationFrame(loop);
     },
+
 
 
     _stopSyncLoop() {
