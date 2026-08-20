@@ -42,3 +42,44 @@
 #calendar-sidebar .vc-header {
     padding: 0.5rem !important;
 }
+
+/* Sincronização e Destaque TTS (Versículo e Palavra) */
+p[data-v] {
+    transition: background-color 0.25s ease, border-color 0.25s ease;
+    border-left: 3px solid transparent;
+    padding-left: 0.5rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+p[data-v].active-verse {
+    border-left-color: #6366f1;
+    background-color: rgba(99, 102, 241, 0.06);
+}
+
+:is(.dark) p[data-v].active-verse {
+    border-left-color: #818cf8;
+    background-color: rgba(129, 140, 248, 0.12);
+}
+
+span[data-t] {
+    display: inline;
+    padding: 0.1rem 0.2rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.15s ease;
+}
+
+span[data-t][data-playing="true"] {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.25);
+}
+
+:is(.dark) span[data-t][data-playing="true"] {
+    background-color: rgba(99, 102, 241, 0.35);
+    color: #e0e7ff;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(129, 140, 248, 0.35);
+}

@@ -1,16 +1,28 @@
+import { TTSHighlightManager } from './tts-highlight';
+
+const highlightManager = new TTSHighlightManager();
+
 export const ttsHandler = () => ({
     isSpeaking: false,
     isPaused: false,
     showTtsSettings: false,
     ttsAnnounceVerses: false,
     ttsAutoMusic: false,
+    highlightFollow: true,
     _audioElement: null,
     _audioUrls: [],
     _currentAudioIndex: 0,
     isTtsLoading: false,
+    _rafId: null,
+    _currentBlocks: [],
 
     initTts() {
-        // Vozes não precisam mais ser carregadas do navegador
+        this.highlightManager = highlightManager;
+    },
+
+    toggleHighlightFollow() {
+        this.highlightFollow = !this.highlightFollow;
+        highlightManager.highlightFollow = this.highlightFollow;
     },
 
     extractBibleBlocks() {
@@ -22,6 +34,7 @@ export const ttsHandler = () => ({
 
             testament.chapters.forEach(chapter => {
                 const parts = [];
+                const blockTokens = [];
                 parts.push(`${testament.book_name} o capítulo ${chapter.number}.`);
 
                 let startVerse = null;
@@ -32,6 +45,9 @@ export const ttsHandler = () => ({
                     endVerse = chapter.verses[chapter.verses.length - 1].number;
 
                     chapter.verses.forEach(verse => {
+                        if (verse.tokens) {
+                            blockTokens.push(...verse.tokens);
+                        }
                         if (this.ttsAnnounceVerses) {
                             parts.push(`Versículo ${verse.number}. ${verse.text}`);
                         } else {
@@ -47,7 +63,8 @@ export const ttsHandler = () => ({
                     chapter: chapter.number,
                     start_verse: startVerse,
                     end_verse: endVerse,
-                    text: parts.join(' ')
+                    text: parts.join(' '),
+                    tokens: blockTokens,
                 });
             });
         };
@@ -63,6 +80,7 @@ export const ttsHandler = () => ({
             this._audioElement?.pause();
             if (this.ttsAutoMusic) this.stopAmbientMusic();
             this.isPaused = true;
+            this._stopSyncLoop();
             return;
         }
 
@@ -70,6 +88,7 @@ export const ttsHandler = () => ({
             this._audioElement?.play();
             if (this.ttsAutoMusic) this.startAmbientMusic();
             this.isPaused = false;
+            this._startSyncLoop();
             return;
         }
 
@@ -81,6 +100,7 @@ export const ttsHandler = () => ({
             return;
         }
 
+        this._currentBlocks = blocks;
         this.isTtsLoading = true;
 
         try {
@@ -99,14 +119,14 @@ export const ttsHandler = () => ({
                 },
                 body: JSON.stringify({
                     date: formattedDate,
-                    blocks: blocks // Envia os blocos estruturados
+                    blocks: blocks
                 })
             });
 
             const data = await res.json();
-            if (data.success && data.urls && data.urls.length > 0) { // Espera um array de URLs
+            if (data.success && data.urls && data.urls.length > 0) {
                 console.log('[TTS] Audio URLs recebidas:', data.urls);
-                this.playAudioPlaylist(data.urls); // Chama a nova função de playlist
+                this.playAudioPlaylist(data.urls);
             } else {
                 console.error('[TTS] Erro da API:', data.message);
                 alert('Não foi possível carregar o áudio.');
@@ -119,9 +139,8 @@ export const ttsHandler = () => ({
         }
     },
 
-    // Nova função para reproduzir uma lista de URLs de áudio sequencialmente
     playAudioPlaylist(urls) {
-        this.stopTts(); // Para qualquer reprodução atual e reseta o estado
+        this.stopTts();
 
         if (!urls || urls.length === 0) {
             console.warn('[TTS] Nenhuma URL de áudio para reproduzir.');
@@ -133,13 +152,20 @@ export const ttsHandler = () => ({
         this.isSpeaking = true;
         this.isPaused = false;
 
+        // Garante que as referências do DOM estejam atualizadas
+        if (this.$refs.bibleContainer) {
+            highlightManager.setContainerRef(this.$refs.bibleContainer);
+        }
+        highlightManager.cacheDOMReferences();
+        highlightManager.highlightFollow = this.highlightFollow;
+
         this._playCurrentAudioChunk();
     },
 
     _playCurrentAudioChunk() {
         if (this._currentAudioIndex >= this._audioUrls.length) {
             this.triggerReadingCompletionWithCelebration();
-            this.stopTts(); // Fim da playlist
+            this.stopTts();
             return;
         }
 
@@ -150,33 +176,36 @@ export const ttsHandler = () => ({
             this._audioElement = null;
         }
 
+        this._stopSyncLoop();
+
         this._audioElement = new Audio(url);
 
         this._audioElement.onended = () => {
             console.log(`[TTS] Chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length} finalizado.`);
+            this._stopSyncLoop();
             this._currentAudioIndex++;
-            this._playCurrentAudioChunk(); // Reproduz o próximo chunk
+            this._playCurrentAudioChunk();
         };
 
         this._audioElement.onerror = (e) => {
             console.error(`[TTS] Erro no carregamento do chunk de áudio ${this._currentAudioIndex + 1}:`, url, e);
 
-            // Tenta verificar se o erro é um 404 via fetch para logar melhor
             fetch(url, { method: 'HEAD' }).then(res => {
                 if (!res.ok) {
                     console.error(`[TTS] Arquivo MP3 não encontrado ou inacessível (Status: ${res.status})`);
                 }
             }).catch(() => { });
 
-            this.stopTts(); // Para a playlist inteira em caso de erro
+            this.stopTts();
             alert('Erro ao carregar um trecho do áudio.');
         };
 
         this._audioElement.play().then(() => {
             console.log(`[TTS] Iniciando chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length}.`);
-            if (this.ttsAutoMusic && this._currentAudioIndex === 0) { // Inicia a música ambiente apenas para o primeiro chunk
+            if (this.ttsAutoMusic && this._currentAudioIndex === 0) {
                 this.startAmbientMusic();
             }
+            this._startSyncLoop();
         }).catch(err => {
             console.error('[TTS] Falha na reprodução do chunk', this._currentAudioIndex + 1, err);
             this.stopTts();
@@ -184,15 +213,61 @@ export const ttsHandler = () => ({
         });
     },
 
+    _startSyncLoop() {
+        this._stopSyncLoop();
+
+        const currentBlock = this._currentBlocks[this._currentAudioIndex];
+        const blockTokens = currentBlock?.tokens || [];
+
+        if (!blockTokens.length) return;
+
+        const loop = () => {
+            if (this._audioElement && !this._audioElement.paused && this._audioElement.duration > 0) {
+                const duration = this._audioElement.duration;
+                const currentTime = this._audioElement.currentTime;
+                const progress = Math.min(Math.max(currentTime / duration, 0), 1);
+
+                const tokenIndex = Math.min(
+                    Math.floor(progress * blockTokens.length),
+                    blockTokens.length - 1
+                );
+
+                const activeToken = blockTokens[tokenIndex];
+                if (activeToken) {
+                    highlightManager.setActiveToken(activeToken.id);
+                }
+            }
+
+            if (this.isSpeaking && !this.isPaused) {
+                this._rafId = requestAnimationFrame(loop);
+            }
+        };
+
+        this._rafId = requestAnimationFrame(loop);
+    },
+
+    _stopSyncLoop() {
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+    },
+
     stopTts() {
+        this._stopSyncLoop();
+
         if (this._audioElement) {
             this._audioElement.pause();
             this._audioElement.currentTime = 0;
         }
         if (this.ttsAutoMusic) this.stopAmbientMusic();
+        
+        highlightManager.clearAllHighlights();
+
         this.isSpeaking = false;
         this.isPaused = false;
-        this._audioUrls = []; // Reseta a playlist
-        this._currentAudioIndex = 0; // Reseta o índice
+        this._audioUrls = [];
+        this._currentAudioIndex = 0;
+        this._currentBlocks = [];
     },
 });

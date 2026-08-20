@@ -429,7 +429,6 @@
                                 <div>
                                     <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Música de foco
                                     </p>
-                                    <!-- <p class="text-xs text-slate-400 mt-0.5">Inicia automaticamente com a leitura</p> -->
                                 </div>
                                 <button @click="ttsAutoMusic = !ttsAutoMusic; updateMusicRealtime()"
                                     :class="ttsAutoMusic ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
@@ -440,21 +439,21 @@
                                 </button>
                             </div>
 
-                            <!-- Velocidade -->
-                            <!-- <div class="mb-4">
-                                <p
-                                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                    Velocidade</p>
-                                <div class="flex gap-1.5 flex-wrap">
-                                    <template x-for="rate in [0.5, 0.75, 1.0, 1.25, 1.5]" :key="rate">
-                                        <button @click="ttsRate = rate; updateTtsRealtime()"
-                                            :class="ttsRate === rate ? 'bg-violet-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'"
-                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                                            x-text="rate + '×'">
-                                        </button>
-                                    </template>
+                            <!-- Toggle: Acompanhar Leitura (Highlight Follow) -->
+                            <div
+                                class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">Acompanhar leitura</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Rolagem automática no texto</p>
                                 </div>
-                            </div> -->
+                                <button @click="toggleHighlightFollow()"
+                                    :class="highlightFollow ? 'bg-amber-500' : 'bg-slate-200 dark:bg-slate-700'"
+                                    class="relative w-11 h-6 rounded-full transition-colors shrink-0 ml-3">
+                                    <span :class="highlightFollow ? 'translate-x-5' : 'translate-x-1'"
+                                        class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ease-in-out block">
+                                    </span>
+                                </button>
+                            </div>
 
                         </div>
                     </div>
@@ -490,11 +489,20 @@
                                                 x-text="bibleData.old_testament.book_name + ' ' + chapter.number"></h3>
                                             <div class="space-y-6">
                                                 <template x-for="verse in chapter.verses" :key="verse.number">
-                                                    <p
+                                                    <p :data-v="chapter.number + '.' + verse.number"
                                                         class="text-xl lg:text-2xl leading-relaxed text-slate-700 dark:text-slate-300 font-serif">
                                                         <sup class="text-sm font-bold text-indigo-500 mr-2"
                                                             x-text="verse.number"></sup>
-                                                        <span x-text="verse.text"></span>
+                                                        <template x-if="verse.tokens && verse.tokens.length > 0">
+                                                            <span>
+                                                                <template x-for="token in verse.tokens" :key="token.id">
+                                                                    <span :data-t="token.id" :data-v="chapter.number + '.' + verse.number" x-text="token.rawText"></span>
+                                                                </template>
+                                                            </span>
+                                                        </template>
+                                                        <template x-if="!verse.tokens || verse.tokens.length === 0">
+                                                            <span x-text="verse.text"></span>
+                                                        </template>
                                                     </p>
                                                 </template>
                                             </div>
@@ -512,11 +520,20 @@
                                                 x-text="bibleData.new_testament.book_name + ' ' + chapter.number"></h3>
                                             <div class="space-y-6">
                                                 <template x-for="verse in chapter.verses" :key="verse.number">
-                                                    <p
+                                                    <p :data-v="chapter.number + '.' + verse.number"
                                                         class="text-xl lg:text-2xl leading-relaxed text-slate-700 dark:text-slate-300 font-serif">
                                                         <sup class="text-sm font-bold text-rose-500 mr-2"
                                                             x-text="verse.number"></sup>
-                                                        <span x-text="verse.text"></span>
+                                                        <template x-if="verse.tokens && verse.tokens.length > 0">
+                                                            <span>
+                                                                <template x-for="token in verse.tokens" :key="token.id">
+                                                                    <span :data-t="token.id" :data-v="chapter.number + '.' + verse.number" x-text="token.rawText"></span>
+                                                                </template>
+                                                            </span>
+                                                        </template>
+                                                        <template x-if="!verse.tokens || verse.tokens.length === 0">
+                                                            <span x-text="verse.text"></span>
+                                                        </template>
                                                     </p>
                                                 </template>
                                             </div>

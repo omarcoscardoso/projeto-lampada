@@ -1,3 +1,5 @@
+import { BibleTokenizer } from './tts-highlight';
+
 export const devotionalApp = () => ({
     showBibleModal: false,
     bibleLoading: false,
@@ -66,7 +68,16 @@ export const devotionalApp = () => ({
 
         try {
             const response = await fetch(`/api/bible/read?ref_old=${encodeURIComponent(refOld || '')}&ref_new=${encodeURIComponent(refNew || '')}`);
-            this.bibleData = await response.json();
+            const data = await response.json();
+            BibleTokenizer.processBibleData(data);
+            this.bibleData = data;
+            
+            this.$nextTick(() => {
+                if (this.highlightManager && this.$refs.bibleContainer) {
+                    this.highlightManager.setContainerRef(this.$refs.bibleContainer);
+                    this.highlightManager.cacheDOMReferences();
+                }
+            });
         } catch (e) {
             console.error('Erro ao buscar texto bíblico', e);
         } finally {
@@ -82,3 +93,4 @@ export const devotionalApp = () => ({
     }
 
 });
+
