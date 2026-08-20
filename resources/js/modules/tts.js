@@ -16,13 +16,10 @@ export const ttsHandler = () => ({
     _rafId: null,
     _currentBlocks: [],
 
-    init() {
-        this.highlightManager = highlightManager;
-    },
-
     initTts() {
         this.highlightManager = highlightManager;
     },
+
 
     toggleHighlightFollow() {
         this.highlightFollow = !this.highlightFollow;
