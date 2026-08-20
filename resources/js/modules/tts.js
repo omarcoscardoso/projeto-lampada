@@ -40,7 +40,9 @@ export const ttsHandler = () => ({
             testament.chapters.forEach(chapter => {
                 const parts = [];
                 const blockTokens = [];
-                parts.push(`${testament.book_name} o capítulo ${chapter.number}.`);
+
+                const headerText = `${testament.book_name} o capítulo ${chapter.number}.`;
+                parts.push(headerText);
 
                 let startVerse = null;
                 let endVerse = null;
@@ -61,6 +63,11 @@ export const ttsHandler = () => ({
                     });
                 }
 
+                const fullText = parts.join(' ');
+                const headerLength = headerText.length;
+                const totalLength = fullText.length;
+                const headerRatio = totalLength > 0 ? (headerLength / totalLength) : 0;
+
                 blocks.push({
                     testament: testamentType,
                     book_name: testament.book_name,
@@ -68,7 +75,9 @@ export const ttsHandler = () => ({
                     chapter: chapter.number,
                     start_verse: startVerse,
                     end_verse: endVerse,
-                    text: parts.join(' '),
+                    text: fullText,
+                    headerText,
+                    headerRatio,
                     tokens: blockTokens,
                 });
             });
@@ -227,9 +236,11 @@ export const ttsHandler = () => ({
     _startSyncLoop() {
         this._stopSyncLoop();
 
+        let currentBlock = null;
         let blockTokens = [];
         if (this._currentBlocks && this._currentBlocks[this._currentAudioIndex]) {
-            blockTokens = this._currentBlocks[this._currentAudioIndex].tokens || [];
+            currentBlock = this._currentBlocks[this._currentAudioIndex];
+            blockTokens = currentBlock.tokens || [];
         }
         if (!blockTokens.length && this._currentBlocks) {
             this._currentBlocks.forEach(b => {
@@ -242,22 +253,32 @@ export const ttsHandler = () => ({
             return;
         }
 
-        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${blockTokens.length} tokens.`);
+        const headerRatio = currentBlock?.headerRatio || 0;
+        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${blockTokens.length} tokens. Offset de cabeçalho: ${(headerRatio * 100).toFixed(1)}%`);
 
         const loop = () => {
             if (this._audioElement && !this._audioElement.paused && this._audioElement.duration > 0) {
                 const duration = this._audioElement.duration;
                 const currentTime = this._audioElement.currentTime;
-                const progress = Math.min(Math.max(currentTime / duration, 0), 1);
+                const overallProgress = Math.min(Math.max(currentTime / duration, 0), 1);
 
-                const tokenIndex = Math.min(
-                    Math.floor(progress * blockTokens.length),
-                    blockTokens.length - 1
-                );
+                if (overallProgress < headerRatio) {
+                    // Enquanto a narração está lendo o título/capítulo ("Salmos o capítulo 119"), mantém sem destacar tokens de versículo
+                    highlightManager.clearAllHighlights();
+                } else {
+                    // Ajusta a escala de progresso descontando o tempo da vinheta inicial
+                    const versesProgress = (overallProgress - headerRatio) / (1 - headerRatio);
+                    const clampedVersesProgress = Math.min(Math.max(versesProgress, 0), 1);
 
-                const activeToken = blockTokens[tokenIndex];
-                if (activeToken) {
-                    highlightManager.setActiveToken(activeToken.id);
+                    const tokenIndex = Math.min(
+                        Math.floor(clampedVersesProgress * blockTokens.length),
+                        blockTokens.length - 1
+                    );
+
+                    const activeToken = blockTokens[tokenIndex];
+                    if (activeToken) {
+                        highlightManager.setActiveToken(activeToken.id);
+                    }
                 }
             }
 
@@ -268,6 +289,7 @@ export const ttsHandler = () => ({
 
         this._rafId = requestAnimationFrame(loop);
     },
+
 
     _stopSyncLoop() {
         if (this._rafId !== null) {
