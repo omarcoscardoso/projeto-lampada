@@ -86,14 +86,20 @@ export class TTSHighlightManager {
     }
 
     /**
-     * Mapeia os elementos do DOM em O(1)
+     * Mapeia os elementos do DOM em O(1) com fallback para document completo
      */
     cacheDOMReferences() {
         this.tokenDomMap.clear();
         this.verseDomMap.clear();
 
-        const root = this.containerRef || document;
-        const spans = root.querySelectorAll('span[data-t]');
+        let spans = [];
+        if (this.containerRef && document.body.contains(this.containerRef)) {
+            spans = Array.from(this.containerRef.querySelectorAll('span[data-t]'));
+        }
+        if (!spans.length) {
+            spans = Array.from(document.querySelectorAll('span[data-t]'));
+        }
+
         spans.forEach(span => {
             const tokenId = parseInt(span.getAttribute('data-t'), 10);
             if (!isNaN(tokenId)) {
@@ -101,13 +107,22 @@ export class TTSHighlightManager {
             }
         });
 
-        const verses = root.querySelectorAll('[data-v]');
+        let verses = [];
+        if (this.containerRef && document.body.contains(this.containerRef)) {
+            verses = Array.from(this.containerRef.querySelectorAll('[data-v]'));
+        }
+        if (!verses.length) {
+            verses = Array.from(document.querySelectorAll('[data-v]'));
+        }
+
         verses.forEach(verse => {
             const verseKey = verse.getAttribute('data-v');
             if (verseKey && !this.verseDomMap.has(verseKey)) {
                 this.verseDomMap.set(verseKey, verse);
             }
         });
+
+        console.log(`[TTS-Highlight] Mapeados ${this.tokenDomMap.size} tokens e ${this.verseDomMap.size} versículos no DOM.`);
     }
 
     /**
@@ -119,7 +134,14 @@ export class TTSHighlightManager {
             this.cacheDOMReferences();
         }
 
-        const nextTokenEl = this.tokenDomMap.get(tokenId);
+        let nextTokenEl = this.tokenDomMap.get(tokenId);
+
+        // Fallback: se não encontrou o elemento no cache, recarrega referências do DOM
+        if (!nextTokenEl) {
+            this.cacheDOMReferences();
+            nextTokenEl = this.tokenDomMap.get(tokenId);
+        }
+
         if (!nextTokenEl || nextTokenEl === this.currentActiveTokenEl) return;
 
         // 1. Remove destaque do token anterior

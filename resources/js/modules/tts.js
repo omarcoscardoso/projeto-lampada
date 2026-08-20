@@ -16,6 +16,10 @@ export const ttsHandler = () => ({
     _rafId: null,
     _currentBlocks: [],
 
+    init() {
+        this.highlightManager = highlightManager;
+    },
+
     initTts() {
         this.highlightManager = highlightManager;
     },
@@ -27,6 +31,9 @@ export const ttsHandler = () => ({
 
     extractBibleBlocks() {
         if (!this.bibleData) { return []; }
+
+        // Garante que o texto bíblico possui tokens indexados
+        BibleTokenizer.processBibleData(this.bibleData);
 
         const blocks = [];
         const processTestament = (testament, testamentType) => {
