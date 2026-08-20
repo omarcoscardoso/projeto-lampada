@@ -1,16 +1,31 @@
+import { TTSHighlightManager } from './tts-highlight';
+
+const highlightManager = new TTSHighlightManager();
+
+
+
 export const ttsHandler = () => ({
     isSpeaking: false,
     isPaused: false,
     showTtsSettings: false,
     ttsAnnounceVerses: false,
     ttsAutoMusic: false,
+    highlightFollow: true,
     _audioElement: null,
     _audioUrls: [],
     _currentAudioIndex: 0,
     isTtsLoading: false,
+    _rafId: null,
+    _currentBlocks: [],
 
     initTts() {
-        // Vozes não precisam mais ser carregadas do navegador
+        this.highlightManager = highlightManager;
+    },
+
+
+    toggleHighlightFollow() {
+        this.highlightFollow = !this.highlightFollow;
+        highlightManager.highlightFollow = this.highlightFollow;
     },
 
     extractBibleBlocks() {
@@ -22,32 +37,54 @@ export const ttsHandler = () => ({
 
             testament.chapters.forEach(chapter => {
                 const parts = [];
-                parts.push(`${testament.book_name} o capítulo ${chapter.number}.`);
+                const versesInfo = [];
 
-                let startVerse = null;
-                let endVerse = null;
+                const headerText = `${testament.book_name} o capítulo ${chapter.number}.`;
+                parts.push(headerText);
+
+                let totalVersesCharLength = 0;
 
                 if (chapter.verses && chapter.verses.length > 0) {
-                    startVerse = chapter.verses[0].number;
-                    endVerse = chapter.verses[chapter.verses.length - 1].number;
-
                     chapter.verses.forEach(verse => {
-                        if (this.ttsAnnounceVerses) {
-                            parts.push(`Versículo ${verse.number}. ${verse.text}`);
-                        } else {
-                            parts.push(verse.text);
-                        }
+                        const verseText = verse.text;
+                        const verseCharLength = verseText.length;
+                        const verseKey = `${chapter.number}.${verse.number}`;
+
+                        versesInfo.push({
+                            verseKey,
+                            number: verse.number,
+                            text: verseText,
+                            charStart: totalVersesCharLength,
+                            charEnd: totalVersesCharLength + verseCharLength,
+                            length: verseCharLength,
+                        });
+
+                        totalVersesCharLength += verseCharLength;
+                        parts.push(verseText);
                     });
                 }
+
+                versesInfo.forEach(v => {
+                    v.ratioStart = totalVersesCharLength > 0 ? (v.charStart / totalVersesCharLength) : 0;
+                    v.ratioEnd = totalVersesCharLength > 0 ? (v.charEnd / totalVersesCharLength) : 1;
+                });
+
+                const fullText = parts.join(' ');
+                const headerLength = headerText.length;
+                const totalLength = fullText.length;
+                const headerRatio = totalLength > 0 ? (headerLength / totalLength) : 0;
 
                 blocks.push({
                     testament: testamentType,
                     book_name: testament.book_name,
                     book_abbrev: testament.book_abbrev || testament.book_name.substring(0, 3).toLowerCase(),
                     chapter: chapter.number,
-                    start_verse: startVerse,
-                    end_verse: endVerse,
-                    text: parts.join(' ')
+                    start_verse: chapter.verses?.[0]?.number ?? null,
+                    end_verse: chapter.verses?.[chapter.verses.length - 1]?.number ?? null,
+                    text: fullText,
+                    headerText,
+                    headerRatio,
+                    verses: versesInfo,
                 });
             });
         };
@@ -63,6 +100,7 @@ export const ttsHandler = () => ({
             this._audioElement?.pause();
             if (this.ttsAutoMusic) this.stopAmbientMusic();
             this.isPaused = true;
+            this._stopSyncLoop();
             return;
         }
 
@@ -70,6 +108,7 @@ export const ttsHandler = () => ({
             this._audioElement?.play();
             if (this.ttsAutoMusic) this.startAmbientMusic();
             this.isPaused = false;
+            this._startSyncLoop();
             return;
         }
 
@@ -81,6 +120,7 @@ export const ttsHandler = () => ({
             return;
         }
 
+        this._currentBlocks = blocks;
         this.isTtsLoading = true;
 
         try {
@@ -99,14 +139,14 @@ export const ttsHandler = () => ({
                 },
                 body: JSON.stringify({
                     date: formattedDate,
-                    blocks: blocks // Envia os blocos estruturados
+                    blocks: blocks
                 })
             });
 
             const data = await res.json();
-            if (data.success && data.urls && data.urls.length > 0) { // Espera um array de URLs
+            if (data.success && data.urls && data.urls.length > 0) {
                 console.log('[TTS] Audio URLs recebidas:', data.urls);
-                this.playAudioPlaylist(data.urls); // Chama a nova função de playlist
+                this.playAudioPlaylist(data.urls);
             } else {
                 console.error('[TTS] Erro da API:', data.message);
                 alert('Não foi possível carregar o áudio.');
@@ -119,19 +159,31 @@ export const ttsHandler = () => ({
         }
     },
 
-    // Nova função para reproduzir uma lista de URLs de áudio sequencialmente
     playAudioPlaylist(urls) {
-        this.stopTts(); // Para qualquer reprodução atual e reseta o estado
+        const savedBlocks = (this._currentBlocks && this._currentBlocks.length)
+            ? this._currentBlocks
+            : this.extractBibleBlocks();
+
+        this.stopTts();
 
         if (!urls || urls.length === 0) {
             console.warn('[TTS] Nenhuma URL de áudio para reproduzir.');
             return;
         }
 
+        this._currentBlocks = savedBlocks;
         this._audioUrls = urls;
         this._currentAudioIndex = 0;
         this.isSpeaking = true;
         this.isPaused = false;
+
+        // Garante que as referências do DOM estejam atualizadas
+        const container = this.$refs?.bibleContainer || document.getElementById('bibleContainer');
+        if (container) {
+            highlightManager.setContainerRef(container);
+        }
+        highlightManager.cacheDOMReferences();
+        highlightManager.highlightFollow = this.highlightFollow;
 
         this._playCurrentAudioChunk();
     },
@@ -139,7 +191,7 @@ export const ttsHandler = () => ({
     _playCurrentAudioChunk() {
         if (this._currentAudioIndex >= this._audioUrls.length) {
             this.triggerReadingCompletionWithCelebration();
-            this.stopTts(); // Fim da playlist
+            this.stopTts();
             return;
         }
 
@@ -150,33 +202,36 @@ export const ttsHandler = () => ({
             this._audioElement = null;
         }
 
+        this._stopSyncLoop();
+
         this._audioElement = new Audio(url);
 
         this._audioElement.onended = () => {
             console.log(`[TTS] Chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length} finalizado.`);
+            this._stopSyncLoop();
             this._currentAudioIndex++;
-            this._playCurrentAudioChunk(); // Reproduz o próximo chunk
+            this._playCurrentAudioChunk();
         };
 
         this._audioElement.onerror = (e) => {
             console.error(`[TTS] Erro no carregamento do chunk de áudio ${this._currentAudioIndex + 1}:`, url, e);
 
-            // Tenta verificar se o erro é um 404 via fetch para logar melhor
             fetch(url, { method: 'HEAD' }).then(res => {
                 if (!res.ok) {
                     console.error(`[TTS] Arquivo MP3 não encontrado ou inacessível (Status: ${res.status})`);
                 }
             }).catch(() => { });
 
-            this.stopTts(); // Para a playlist inteira em caso de erro
+            this.stopTts();
             alert('Erro ao carregar um trecho do áudio.');
         };
 
         this._audioElement.play().then(() => {
             console.log(`[TTS] Iniciando chunk ${this._currentAudioIndex + 1} de ${this._audioUrls.length}.`);
-            if (this.ttsAutoMusic && this._currentAudioIndex === 0) { // Inicia a música ambiente apenas para o primeiro chunk
+            if (this.ttsAutoMusic && this._currentAudioIndex === 0) {
                 this.startAmbientMusic();
             }
+            this._startSyncLoop();
         }).catch(err => {
             console.error('[TTS] Falha na reprodução do chunk', this._currentAudioIndex + 1, err);
             this.stopTts();
@@ -184,15 +239,80 @@ export const ttsHandler = () => ({
         });
     },
 
+    _startSyncLoop() {
+        this._stopSyncLoop();
+
+        let currentBlock = null;
+        let verses = [];
+        if (this._currentBlocks && this._currentBlocks[this._currentAudioIndex]) {
+            currentBlock = this._currentBlocks[this._currentAudioIndex];
+            verses = currentBlock.verses || [];
+        }
+        if (!verses.length && this._currentBlocks) {
+            this._currentBlocks.forEach(b => {
+                if (b.verses) verses.push(...b.verses);
+            });
+        }
+
+        if (!verses.length) {
+            console.warn('[TTS-Sync] Nenhum versículo encontrado para sincronização.');
+            return;
+        }
+
+        const headerRatio = currentBlock?.headerRatio || 0;
+        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${verses.length} versículos. Header Offset: ${(headerRatio * 100).toFixed(1)}%`);
+
+        const loop = () => {
+            if (this._audioElement && !this._audioElement.paused && this._audioElement.duration > 0) {
+                const duration = this._audioElement.duration;
+                const currentTime = this._audioElement.currentTime;
+                const overallProgress = Math.min(Math.max(currentTime / duration, 0), 1);
+
+                if (overallProgress < headerRatio) {
+                    highlightManager.clearAllHighlights();
+                } else {
+                    const versesProgress = Math.min(Math.max((overallProgress - headerRatio) / (1 - headerRatio), 0), 1);
+
+                    const activeVerse = verses.find(v => versesProgress >= v.ratioStart && versesProgress <= v.ratioEnd) || verses[verses.length - 1];
+
+                    if (activeVerse) {
+                        highlightManager.setActiveVerse(activeVerse.verseKey);
+                    }
+                }
+            }
+
+            if (this.isSpeaking && !this.isPaused) {
+                this._rafId = requestAnimationFrame(loop);
+            }
+        };
+
+        this._rafId = requestAnimationFrame(loop);
+    },
+
+
+
+    _stopSyncLoop() {
+        if (this._rafId !== null) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
+    },
+
     stopTts() {
+        this._stopSyncLoop();
+
         if (this._audioElement) {
             this._audioElement.pause();
             this._audioElement.currentTime = 0;
         }
         if (this.ttsAutoMusic) this.stopAmbientMusic();
+        
+        highlightManager.clearAllHighlights();
+
         this.isSpeaking = false;
         this.isPaused = false;
-        this._audioUrls = []; // Reseta a playlist
-        this._currentAudioIndex = 0; // Reseta o índice
+        this._audioUrls = [];
+        this._currentAudioIndex = 0;
+        this._currentBlocks = [];
     },
 });

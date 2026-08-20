@@ -9,9 +9,10 @@ export const calendarApp = () => ({
     calendarInstances: [],
     displayShortDate: '',
 
-    init() {
+    initCalendarApp() {
         // Define a data inicial como hoje
         this.currentDate = this.getFormattedDate(new Date());
+
         this.updateDisplayDates();
 
         // Inicializa as instâncias do calendário

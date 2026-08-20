@@ -42,3 +42,27 @@
 #calendar-sidebar .vc-header {
     padding: 0.5rem !important;
 }
+
+/* Sincronização e Destaque TTS por Versículo Inteiro (data-v) */
+p[data-v] {
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s ease;
+    border-left: 4px solid transparent;
+    padding-left: 0.85rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0 0.75rem 0.75rem 0;
+}
+
+p[data-v].active-verse {
+    border-left-color: #6366f1 !important;
+    background-color: rgba(99, 102, 241, 0.09) !important;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.1) !important;
+}
+
+:is(.dark) p[data-v].active-verse {
+    border-left-color: #818cf8 !important;
+    background-color: rgba(129, 140, 248, 0.16) !important;
+    box-shadow: 0 2px 14px rgba(129, 140, 248, 0.18) !important;
+}

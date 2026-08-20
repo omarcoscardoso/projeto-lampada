@@ -1,4 +1,5 @@
 export const devotionalApp = () => ({
+
     showBibleModal: false,
     bibleLoading: false,
     bibleData: null,
@@ -67,12 +68,20 @@ export const devotionalApp = () => ({
         try {
             const response = await fetch(`/api/bible/read?ref_old=${encodeURIComponent(refOld || '')}&ref_new=${encodeURIComponent(refNew || '')}`);
             this.bibleData = await response.json();
+            
+            this.$nextTick(() => {
+                if (this.highlightManager && this.$refs.bibleContainer) {
+                    this.highlightManager.setContainerRef(this.$refs.bibleContainer);
+                    this.highlightManager.cacheDOMReferences();
+                }
+            });
         } catch (e) {
             console.error('Erro ao buscar texto bíblico', e);
         } finally {
             this.bibleLoading = false;
         }
     },
+
 
     closeBibleModal() {
         this.stopTts();
@@ -82,3 +91,4 @@ export const devotionalApp = () => ({
     }
 
 });
+

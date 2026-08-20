@@ -25,7 +25,17 @@ Alpine.data('lampadaApp', () => ({
     ...landingApp(),      // Lógica do landing page
     ...gamificationApp(), // Lógica de gamificação
     ...profileApp(),      // Lógica de perfil do usuário
+
+    init() {
+        if (typeof this.initCalendarApp === 'function') {
+            this.initCalendarApp();
+        }
+        if (typeof this.initTts === 'function') {
+            this.initTts();
+        }
+    },
 }));
+
 
 Livewire.start();
 
