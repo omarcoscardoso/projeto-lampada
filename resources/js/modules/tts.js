@@ -1,6 +1,7 @@
-import { TTSHighlightManager } from './tts-highlight';
+import { TTSHighlightManager, BibleTokenizer } from './tts-highlight';
 
 const highlightManager = new TTSHighlightManager();
+
 
 export const ttsHandler = () => ({
     isSpeaking: false,
