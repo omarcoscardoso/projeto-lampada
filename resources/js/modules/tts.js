@@ -145,6 +145,10 @@ export const ttsHandler = () => ({
     },
 
     playAudioPlaylist(urls) {
+        const savedBlocks = (this._currentBlocks && this._currentBlocks.length)
+            ? this._currentBlocks
+            : this.extractBibleBlocks();
+
         this.stopTts();
 
         if (!urls || urls.length === 0) {
@@ -152,14 +156,16 @@ export const ttsHandler = () => ({
             return;
         }
 
+        this._currentBlocks = savedBlocks;
         this._audioUrls = urls;
         this._currentAudioIndex = 0;
         this.isSpeaking = true;
         this.isPaused = false;
 
         // Garante que as referências do DOM estejam atualizadas
-        if (this.$refs.bibleContainer) {
-            highlightManager.setContainerRef(this.$refs.bibleContainer);
+        const container = this.$refs?.bibleContainer || document.getElementById('bibleContainer');
+        if (container) {
+            highlightManager.setContainerRef(container);
         }
         highlightManager.cacheDOMReferences();
         highlightManager.highlightFollow = this.highlightFollow;
@@ -221,10 +227,22 @@ export const ttsHandler = () => ({
     _startSyncLoop() {
         this._stopSyncLoop();
 
-        const currentBlock = this._currentBlocks[this._currentAudioIndex];
-        const blockTokens = currentBlock?.tokens || [];
+        let blockTokens = [];
+        if (this._currentBlocks && this._currentBlocks[this._currentAudioIndex]) {
+            blockTokens = this._currentBlocks[this._currentAudioIndex].tokens || [];
+        }
+        if (!blockTokens.length && this._currentBlocks) {
+            this._currentBlocks.forEach(b => {
+                if (b.tokens) blockTokens.push(...b.tokens);
+            });
+        }
 
-        if (!blockTokens.length) return;
+        if (!blockTokens.length) {
+            console.warn('[TTS-Sync] Nenhum token encontrado para sincronização.');
+            return;
+        }
+
+        console.log(`[TTS-Sync] Loop ativado para o chunk ${this._currentAudioIndex + 1} com ${blockTokens.length} tokens.`);
 
         const loop = () => {
             if (this._audioElement && !this._audioElement.paused && this._audioElement.duration > 0) {
