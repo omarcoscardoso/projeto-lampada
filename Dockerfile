@@ -51,6 +51,7 @@ COPY . .
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY .docker/nginx.conf /etc/nginx/nginx.conf
 COPY .docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY .docker/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY .docker/run.sh /usr/local/bin/run.sh
 
 RUN cp .env.example .env

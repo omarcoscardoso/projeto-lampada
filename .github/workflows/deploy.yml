@@ -34,7 +34,7 @@ jobs:
         run: gcloud auth configure-docker ${{ vars.REGION }}-docker.pkg.dev
 
       - name: Build Docker Image
-        run: docker build -t ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }} .
+        run: docker build --platform linux/amd64 -t ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }} .
             
       - name: Push Docker Image
         run: docker push ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }}  
@@ -49,14 +49,16 @@ jobs:
           flags: | 
             --cpu=1 
             --memory=512Mi
-            --concurrency=80
+            --cpu-boost
+            --concurrency=15
+            --timeout=60s
             --add-cloudsql-instances ${{ vars.CLOUD_SQL_INSTANCE }}
             --allow-unauthenticated
           env_vars: |
             APP_NAME=${{ vars.SERVICE_NAME }}
             APP_ENV=${{ vars.APP_ENV }}
             APP_URL=${{ vars.APP_URL }}
-            APP_DEBUG=true
+            APP_DEBUG=false
             APP_LOCALE=pt_BR
             LOG_CHANNEL=stderr
             DB_CONNECTION=mysql
