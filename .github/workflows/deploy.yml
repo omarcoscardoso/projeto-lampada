@@ -33,11 +33,18 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ vars.REGION }}-docker.pkg.dev
 
-      - name: Build Docker Image
-        run: docker build --platform linux/amd64 -t ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }} .
-            
-      - name: Push Docker Image
-        run: docker push ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }}  
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPO_NAME }}/${{ vars.SERVICE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy to Cloud Run
         id: deploy
