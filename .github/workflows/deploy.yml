@@ -64,6 +64,7 @@ jobs:
           env_vars: |
             APP_NAME=${{ vars.SERVICE_NAME }}
             APP_ENV=${{ vars.APP_ENV }}
+            APP_KEY=${{ secrets.APP_KEY }}
             APP_URL=${{ vars.APP_URL }}
             APP_DEBUG=false
             APP_LOCALE=pt_BR
