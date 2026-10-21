@@ -75,7 +75,7 @@ O deploy é acionado automaticamente em cada push para a branch `main` através 
 
 ### Etapas executadas no Workflow:
 1. Autenticação no GCP com `GCP_SA_KEY`.
-2. Build da imagem Docker contendo Nginx + PHP-FPM 8.4 + Supervisor.
+2. Build da imagem Docker contendo Nginx + PHP-FPM 8.5 + Supervisor.
 3. Envios (*Push*) da imagem para o Google Artifact Registry.
 4. Deploy no Google Cloud Run conectando a instância ao Cloud SQL.
 5. Execução automática de migrações e otimização de caches via script de inicialização (`run.sh`).
