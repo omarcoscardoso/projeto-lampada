@@ -25,12 +25,14 @@ COPY vite.config.js tailwind.config.js ./
 RUN npm run build
 
 # =============================================================================
-# Stage 3: Imagem Final de Produção (PHP-FPM 8.4 + Nginx)
+# Stage 3: Imagem Final de Produção (PHP-FPM 8.5 + Nginx)
 # =============================================================================
-FROM php:8.4-fpm-alpine
+FROM php:8.5-fpm-alpine
 
-# Instala dependências de runtime e compila extensões PHP com dependências virtuais limpas
-RUN apk add --no-cache \
+# Atualiza pacotes do sistema (patches de segurança) e instala dependências/extensões PHP
+# Nota: No PHP 8.5, a extensão OPcache já vem compilada nativamente no core do PHP.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
     nginx \
     supervisor \
     mysql-client \
@@ -51,12 +53,12 @@ RUN apk add --no-cache \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
-    opcache \
     zip \
     gd \
     bcmath \
     intl \
-    && apk del .build-deps
+    && apk del .build-deps \
+    && php -v
 
 WORKDIR /var/www/html
 
