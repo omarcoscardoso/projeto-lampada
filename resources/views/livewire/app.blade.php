@@ -332,25 +332,26 @@
 
         <!-- Modal de Leitura Bíblica (dentro do Main) -->
         <div x-show="showBibleModal"
-            class="fixed inset-x-0 top-0 bottom-16 lg:absolute lg:inset-0 z-[110] flex flex-col bg-white dark:bg-slate-950"
+            class="fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] lg:absolute lg:inset-0 z-[110] flex flex-col bg-white dark:bg-slate-950"
             x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="translate-y-full"
             x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-300 transform"
             x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full" x-cloak>
 
             <header
-                class="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-10 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl">
+                class="h-16 lg:h-20 flex items-center justify-between px-3 sm:px-4 lg:px-10 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 gap-2">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div class="p-1.5 sm:p-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-xl shrink-0">
                         <x-lucide-book-open class="w-5 h-5 lg:w-6 lg:h-6" />
                     </div>
-                    <h2 class="font-bold text-lg lg:text-xl">Leitura Bíblica</h2>
+                    <h2 class="font-bold text-base sm:text-lg lg:text-xl truncate">Leitura Bíblica</h2>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                     <!-- Botão Auto-Scroll -->
                     <button @click="toggleAutoScroll"
                         :class="isAutoScrolling ? 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'"
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95">
+                        class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95"
+                        :title="isAutoScrolling ? 'Pausar Rolagem' : 'Auto Rolagem'">
                         <template x-if="isAutoScrolling">
                             <x-lucide-pause-circle class="w-5 h-5 animate-pulse" />
                         </template>
@@ -366,7 +367,7 @@
                         <div class="flex items-center gap-1">
                             <button @click="toggleTts"
                                 :class="isTtsLoading ? 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700' : (isSpeaking && !isPaused ? 'bg-violet-100 text-violet-600 border-violet-200 dark:bg-violet-900/30 dark:border-violet-700' : (isSpeaking && isPaused ? 'bg-sky-100 text-sky-600 border-sky-200 dark:bg-sky-900/30 dark:border-sky-700' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'))"
-                                class="flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                                class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
                                 :disabled="isTtsLoading"
                                 :title="isSpeaking && !isPaused ? 'Pausar leitura' : (isSpeaking && isPaused ? 'Retomar leitura' : 'Ler em voz alta')">
                                 <template x-if="isTtsLoading">
@@ -402,7 +403,7 @@
                             x-transition:leave="transition ease-in duration-150"
                             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                             x-transition:leave-end="opacity-0 scale-95 translate-y-1"
-                            class="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 z-50"
+                            class="absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 z-50"
                             x-cloak>
 
                             <!-- Toggle: Anunciar versículos -->
@@ -539,11 +540,11 @@
                                 <div class="w-20 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mb-12"></div>
                                 <button
                                     @click="const whatsappUrl = `https://wa.me/?text=${encodeURIComponent('Leitura do dia 🆗')}`; window.open(whatsappUrl, '_blank');"
-                                    class="flex items-center gap-3 px-12 py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl shadow-2xl shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 text-xl font-extrabold group">
-                                    <x-lucide-share-2 class="w-7 h-7 group-hover:rotate-12 transition-transform" />
-                                    Compartilhar OK de Leitura
+                                    class="flex items-center justify-center gap-3 w-full max-w-sm sm:w-auto px-6 sm:px-12 py-4 sm:py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 text-base sm:text-xl font-bold sm:font-extrabold text-center group">
+                                    <x-lucide-share-2 class="w-6 h-6 sm:w-7 sm:h-7 group-hover:rotate-12 transition-transform shrink-0" />
+                                    <span>Compartilhar OK de Leitura</span>
                                 </button>
-                                <p class="mt-6 text-slate-400 dark:text-slate-500 text-base">Notifique seu grupo que
+                                <p class="mt-6 text-slate-400 dark:text-slate-500 text-sm sm:text-base text-center">Notifique seu grupo que
                                     você completou a leitura!</p>
                             </div>
                         </div>
@@ -692,7 +693,7 @@
         <div class="p-1 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe">
             <form @submit.prevent="sendToAi" class="p-4 flex items-center gap-2">
                 <input x-model="userInput" type="text" placeholder="Tire suas dúvidas..."
-                    class="flex-grow bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-3 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white">
+                    class="flex-grow bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-4 py-3 text-base sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white">
                 <button type="submit" :disabled="!userInput.trim() || isAiLoading"
                     class="p-3 bg-amber-600 hover:bg-amber-700 text-white rounded-2xl transition-colors disabled:opacity-50">
                     <x-lucide-send class="w-5 h-5" />
@@ -911,7 +912,7 @@
                                 Nome Completo
                             </label>
                             <input type="text" x-model="profileForm.name" required
-                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-base sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
                         </div>
 
                         <div>
@@ -920,7 +921,7 @@
                             </label>
                             <div class="relative">
                                 <input type="email" :value="profileData?.user?.email" disabled
-                                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm text-slate-400 dark:text-slate-500 font-medium cursor-not-allowed">
+                                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-base sm:text-sm text-slate-400 dark:text-slate-500 font-medium cursor-not-allowed">
                                 <template x-if="profileData?.user?.is_google">
                                     <span class="absolute right-3 top-3 text-[10px] font-extrabold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
                                         Google
@@ -965,7 +966,7 @@
                                 </label>
                                 <input type="password" x-model="passwordForm.current_password" required autocomplete="current-password"
                                     placeholder="Digite sua senha atual"
-                                    class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                                    class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-base sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
                                 <template x-if="passwordFieldErrors?.current_password">
                                     <p class="text-[11px] text-rose-500 mt-1" x-text="passwordFieldErrors.current_password[0]"></p>
                                 </template>
@@ -978,7 +979,7 @@
                             </label>
                             <input type="password" x-model="passwordForm.password" required minlength="8" autocomplete="new-password"
                                 placeholder="No mínimo 8 caracteres"
-                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-base sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
                             <template x-if="passwordFieldErrors?.password">
                                 <p class="text-[11px] text-rose-500 mt-1" x-text="passwordFieldErrors.password[0]"></p>
                             </template>
@@ -990,7 +991,7 @@
                             </label>
                             <input type="password" x-model="passwordForm.password_confirmation" required minlength="8" autocomplete="new-password"
                                 placeholder="Repita a nova senha"
-                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
+                                class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3 text-base sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none dark:text-white font-medium">
                         </div>
 
                         <div class="pt-2">

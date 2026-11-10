@@ -41,10 +41,15 @@ class BibleService
         'ester' => 'et',
         'jó' => 'job',
         'salmos' => 'sl',
+        'salmo' => 'sl',
         'provérbios' => 'pv',
         'proverbios' => 'pv',
         'eclesiastes' => 'ec',
         'cantares' => 'ct',
+        'cânticos' => 'ct',
+        'canticos' => 'ct',
+        'cântico dos cânticos' => 'ct',
+        'cantico dos canticos' => 'ct',
         'isaías' => 'is',
         'isaias' => 'is',
         'jeremias' => 'jr',
@@ -71,6 +76,7 @@ class BibleService
         'marcos' => 'mc',
         'lucas' => 'lc',
         'joão' => 'jo',
+        'joao' => 'jo',
         'atos' => 'at',
         'romanos' => 'rm',
         '1 coríntios' => '1co',
@@ -91,6 +97,10 @@ class BibleService
         '2 timoteo' => '2tm',
         'tito' => 'tt',
         'filemom' => 'fm',
+        'filemon' => 'fm',
+        'filemão' => 'fm',
+        'filemao' => 'fm',
+        'flm' => 'fm',
         'hebreus' => 'hb',
         'tiago' => 'tg',
         '1 pedro' => '1pe',
@@ -227,14 +237,19 @@ class BibleService
 
         $bookPart = $bookMatches[1];
         $bookNameNormalized = trim(Str::lower($bookPart));
+        $bookNameNormalized = rtrim($bookNameNormalized, '.');
         $bookNameNormalized = preg_replace('/(\d)\s*([a-zâêîôûáéíóúãõç])/u', '$1 $2', $bookNameNormalized);
 
         $bookAbbrev = $this->bookMap[$bookNameNormalized] ?? null;
         if (! $bookAbbrev) {
-            foreach ($this->bookMap as $name => $abbrev) {
-                if (Str::startsWith($bookNameNormalized, $name)) {
-                    $bookAbbrev = $abbrev;
-                    break;
+            if (in_array($bookNameNormalized, $this->bookMap, true)) {
+                $bookAbbrev = $bookNameNormalized;
+            } else {
+                foreach ($this->bookMap as $name => $abbrev) {
+                    if (Str::startsWith($bookNameNormalized, $name)) {
+                        $bookAbbrev = $abbrev;
+                        break;
+                    }
                 }
             }
         }
@@ -245,20 +260,30 @@ class BibleService
         // 2. Extract the rest
         $rest = trim(substr($reference, strlen($bookPart)));
 
-        // Handle chapters separated by slashes (e.g. 22/23/24)
-        $chapters = [];
-        if (preg_match('/^(\d+(?:\/\d+)*)/', $rest, $chapterMatches)) {
-            $chapters = explode('/', $chapterMatches[1]);
-        } else {
-            return null;
-        }
+        $singleChapterBooks = ['ob', 'fm', '2jo', '3jo', 'jd'];
+        $isSingleChapterBook = in_array($bookAbbrev, $singleChapterBooks, true);
 
-        // Optional Verses (only if one chapter is specified)
+        // Handle chapters separated by slashes (e.g. 22/23/24) or single-chapter book references
+        $chapters = [];
         $startVerse = null;
         $endVerse = null;
-        if (count($chapters) === 1 && preg_match('/:(\d+)(?:-(\d+))?/', $rest, $verseMatches)) {
+
+        if ($rest === '' && $isSingleChapterBook) {
+            $chapters = [1];
+        } elseif ($isSingleChapterBook && preg_match('/^:(\d+)(?:-(\d+))?/', $rest, $verseMatches)) {
+            $chapters = [1];
             $startVerse = (int) $verseMatches[1];
             $endVerse = isset($verseMatches[2]) ? (int) $verseMatches[2] : null;
+        } elseif (preg_match('/^(\d+(?:\/\d+)*)/', $rest, $chapterMatches)) {
+            $chapters = explode('/', $chapterMatches[1]);
+
+            // Optional Verses (only if one chapter is specified)
+            if (count($chapters) === 1 && preg_match('/:(\d+)(?:-(\d+))?/', $rest, $verseMatches)) {
+                $startVerse = (int) $verseMatches[1];
+                $endVerse = isset($verseMatches[2]) ? (int) $verseMatches[2] : null;
+            }
+        } else {
+            return null;
         }
 
         return [
